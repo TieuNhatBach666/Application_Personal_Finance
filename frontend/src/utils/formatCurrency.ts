@@ -1,25 +1,70 @@
-// Utility để format số tiền ngắn gọn
-export const formatCurrencyCompact = (amount: number): string => {
-  if (amount === 0) return '0 ₫';
-  
-  const absAmount = Math.abs(amount);
-  
-  if (absAmount >= 1000000000000) { // Nghìn tỷ
-    return `${(amount / 1000000000000).toFixed(1)}N tỷ`;
-  } else if (absAmount >= 1000000000) { // Tỷ
-    return `${(amount / 1000000000).toFixed(1)} tỷ`;
-  } else if (absAmount >= 1000000) { // Triệu
-    return `${(amount / 1000000).toFixed(1)} tr`;
-  } else if (absAmount >= 1000) { // Nghìn
-    return `${(amount / 1000).toFixed(0)}k`;
-  } else {
-    return `${amount.toLocaleString('vi-VN')} ₫`;
+// Currency configuration
+const CURRENCY_CONFIG = {
+  VND: {
+    symbol: '₫',
+    locale: 'vi-VN',
+    position: 'after',
+    compactUnits: {
+      thousand: 'k',
+      million: 'tr',
+      billion: 'tỷ',
+      trillion: 'N tỷ'
+    }
+  },
+  USD: {
+    symbol: '$',
+    locale: 'en-US',
+    position: 'before',
+    compactUnits: {
+      thousand: 'K',
+      million: 'M',
+      billion: 'B',
+      trillion: 'T'
+    }
+  },
+  EUR: {
+    symbol: '€',
+    locale: 'de-DE',
+    position: 'after',
+    compactUnits: {
+      thousand: 'K',
+      million: 'M',
+      billion: 'B',
+      trillion: 'T'
+    }
   }
 };
 
-// Format đầy đủ cho tooltip
-export const formatCurrencyFull = (amount: number): string => {
-  return `${amount.toLocaleString('vi-VN')} ₫`;
+// Utility để format số tiền ngắn gọn với currency setting
+export const formatCurrencyCompact = (amount: number, currency: string = 'VND'): string => {
+  if (amount === 0) return `0 ${CURRENCY_CONFIG[currency as keyof typeof CURRENCY_CONFIG]?.symbol || '₫'}`;
+
+  const config = CURRENCY_CONFIG[currency as keyof typeof CURRENCY_CONFIG] || CURRENCY_CONFIG.VND;
+  const absAmount = Math.abs(amount);
+
+  if (absAmount >= 1000000000000) { // Trillion
+    return `${(amount / 1000000000000).toFixed(1)}${config.compactUnits.trillion}`;
+  } else if (absAmount >= 1000000000) { // Billion
+    return `${(amount / 1000000000).toFixed(1)} ${config.compactUnits.billion}`;
+  } else if (absAmount >= 1000000) { // Million
+    return `${(amount / 1000000).toFixed(1)} ${config.compactUnits.million}`;
+  } else if (absAmount >= 1000) { // Thousand
+    return `${(amount / 1000).toFixed(0)}${config.compactUnits.thousand}`;
+  } else {
+    const formatted = amount.toLocaleString(config.locale);
+    return config.position === 'before'
+      ? `${config.symbol}${formatted}`
+      : `${formatted} ${config.symbol}`;
+  }
+};
+
+// Format đầy đủ cho tooltip với currency setting
+export const formatCurrencyFull = (amount: number, currency: string = 'VND'): string => {
+  const config = CURRENCY_CONFIG[currency as keyof typeof CURRENCY_CONFIG] || CURRENCY_CONFIG.VND;
+  const formatted = amount.toLocaleString(config.locale);
+  return config.position === 'before'
+    ? `${config.symbol}${formatted}`
+    : `${formatted} ${config.symbol}`;
 };
 
 // Format phần trăm

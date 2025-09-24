@@ -64,28 +64,38 @@ router.get('/:category', authenticateToken, asyncHandler(async (req, res) => {
     
     const result = await pool.request()
         .input('userId', req.user.id)
-        .input('category', category)
-        .execute('sp_GetUserSettings');
-    
+        .query(`
+            SELECT SettingKey, SettingValue, Category
+            FROM UserSettings
+            WHERE UserID = @userId
+        `);
+
     const settings = {};
     result.recordset.forEach(setting => {
         let value = setting.SettingValue;
-        switch (setting.SettingType) {
-            case 'boolean':
+
+        // Try to parse as JSON first, then boolean, then number
+        try {
+            if (value === 'true' || value === 'false') {
                 value = value === 'true';
-                break;
-            case 'number':
+            } else if (!isNaN(value) && !isNaN(parseFloat(value))) {
                 value = parseFloat(value);
-                break;
-            case 'json':
-                try {
-                    value = JSON.parse(value);
-                } catch (e) {
-                    console.error('Error parsing JSON setting:', e);
-                }
-                break;
+            } else if (value.startsWith('{') || value.startsWith('[')) {
+                value = JSON.parse(value);
+            }
+        } catch (e) {
+            // Keep as string if parsing fails
         }
-        settings[setting.SettingKey] = value;
+
+        // Parse category.key format
+        const keyParts = setting.SettingKey.split('.');
+        if (keyParts.length === 2) {
+            const [cat, key] = keyParts;
+            if (!settings[cat]) settings[cat] = {};
+            settings[cat][key] = value;
+        } else {
+            settings[setting.SettingKey] = value;
+        }
     });
     
     res.json({
@@ -98,8 +108,17 @@ router.get('/:category', authenticateToken, asyncHandler(async (req, res) => {
 router.put('/:category/:key', authenticateToken, asyncHandler(async (req, res) => {
     const { category, key } = req.params;
     const { value, type = 'string' } = req.body;
-    
+
+    console.log('🔧 Settings Update Request:', {
+        userId: req.user.id,
+        category,
+        key,
+        value,
+        type
+    });
+
     if (!['general', 'notifications', 'privacy', 'backup', 'appearance'].includes(category)) {
+        console.log('❌ Invalid category:', category);
         return res.status(400).json({
             success: false,
             message: 'Category không hợp lệ'
@@ -131,48 +150,55 @@ router.put('/:category/:key', authenticateToken, asyncHandler(async (req, res) =
             stringValue = value.toString();
     }
     
-    // Check if setting exists
-    const existingSetting = await pool.request()
-        .input('userId', req.user.id)
-        .input('settingKey', key)
-        .query(`
-            SELECT SettingID FROM UserSettings 
-            WHERE UserID = @userId AND SettingKey = @settingKey
-        `);
-    
-    if (existingSetting.recordset.length > 0) {
-        // Update existing setting
-        await pool.request()
-            .input('userId', req.user.id)
-            .input('settingKey', key)
-            .input('settingValue', stringValue)
-            .input('settingType', type)
-            .input('category', category)
+    // Use category.key format for SettingKey to maintain structure
+    const settingKey = `${category}.${key}`;
+
+    try {
+        // Use UserID as is (UNIQUEIDENTIFIER)
+        const userId = req.user.id;
+
+        // Check if setting exists
+        const existingSetting = await pool.request()
+            .input('userId', userId)
+            .input('settingKey', settingKey)
             .query(`
-                UPDATE UserSettings SET 
-                    SettingValue = @settingValue,
-                    SettingType = @settingType,
-                    Category = @category,
-                    UpdatedAt = GETUTCDATE()
+                SELECT SettingID FROM UserSettings
                 WHERE UserID = @userId AND SettingKey = @settingKey
             `);
-    } else {
-        // Create new setting
-        const settingId = uuidv4();
-        await pool.request()
-            .input('settingId', settingId)
-            .input('userId', req.user.id)
-            .input('settingKey', key)
-            .input('settingValue', stringValue)
-            .input('settingType', type)
-            .input('category', category)
-            .query(`
-                INSERT INTO UserSettings (
-                    SettingID, UserID, SettingKey, SettingValue, SettingType, Category
-                ) VALUES (
-                    @settingId, @userId, @settingKey, @settingValue, @settingType, @category
-                )
-            `);
+
+        if (existingSetting.recordset.length > 0) {
+            // Update existing setting
+            await pool.request()
+                .input('userId', userId)
+                .input('settingKey', settingKey)
+                .input('settingValue', stringValue)
+                .input('category', category)
+                .query(`
+                    UPDATE UserSettings SET
+                        SettingValue = @settingValue,
+                        Category = @category,
+                        UpdatedAt = GETDATE()
+                    WHERE UserID = @userId AND SettingKey = @settingKey
+                `);
+
+            console.log('✅ Setting updated:', settingKey, '=', stringValue);
+        } else {
+            // Create new setting
+            await pool.request()
+                .input('userId', userId)
+                .input('settingKey', settingKey)
+                .input('settingValue', stringValue)
+                .input('category', category)
+                .query(`
+                    INSERT INTO UserSettings (UserID, SettingKey, SettingValue, Category)
+                    VALUES (@userId, @settingKey, @settingValue, @category)
+                `);
+
+            console.log('✅ Setting created:', settingKey, '=', stringValue);
+        }
+    } catch (dbError) {
+        console.error('❌ Database error:', dbError);
+        throw new Error('Lỗi truy vấn cơ sở dữ liệu: ' + dbError.message);
     }
     
     res.json({

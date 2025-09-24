@@ -22,59 +22,63 @@ import {
   Category,
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useUserSettings } from '../../hooks/useUserSettings';
 import { useAppSelector } from '../../store';
 
 interface SidebarProps {
   drawerWidth: number;
 }
 
-const menuItems = [
-  {
-    text: 'Tổng quan',
-    icon: <Dashboard />,
-    path: '/dashboard',
-  },
-  {
-    text: 'Thu nhập',
-    icon: <TrendingUp />,
-    path: '/income',
-  },
-  {
-    text: 'Chi tiêu',
-    icon: <TrendingDown />,
-    path: '/expenses',
-  },
-  {
-    text: 'Danh mục',
-    icon: <Category />,
-    path: '/categories',
-  },
-  {
-    text: 'Thống kê',
-    icon: <BarChart />,
-    path: '/statistics',
-  },
-  {
-    text: 'Ngân sách',
-    icon: <AccountBalance />,
-    path: '/budget',
-  },
-  {
-    text: 'Cảnh báo',
-    icon: <Notifications />,
-    path: '/notifications',
-  },
-  {
-    text: 'Cài đặt',
-    icon: <Settings />,
-    path: '/settings',
-  },
-];
+// Menu items will be created inside component to use getText function
 
 const Sidebar: React.FC<SidebarProps> = ({ drawerWidth }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { sidebarOpen } = useAppSelector((state) => state.ui);
+  const { getText } = useUserSettings();
+
+  const menuItems = [
+    {
+      text: getText('dashboard'),
+      icon: <Dashboard />,
+      path: '/dashboard',
+    },
+    {
+      text: getText('income'),
+      icon: <TrendingUp />,
+      path: '/income',
+    },
+    {
+      text: getText('expense'),
+      icon: <TrendingDown />,
+      path: '/expenses',
+    },
+    {
+      text: getText('category'),
+      icon: <Category />,
+      path: '/categories',
+    },
+    {
+      text: getText('statistics'),
+      icon: <BarChart />,
+      path: '/statistics',
+    },
+    {
+      text: getText('budget'),
+      icon: <AccountBalance />,
+      path: '/budget',
+    },
+    {
+      text: getText('notifications'),
+      icon: <Notifications />,
+      path: '/notifications',
+    },
+    {
+      text: getText('settings'),
+      icon: <Settings />,
+      path: '/settings',
+    },
+  ];
 
   const handleNavigation = (path: string) => {
     navigate(path);

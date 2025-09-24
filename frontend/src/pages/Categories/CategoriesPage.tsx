@@ -34,10 +34,12 @@ import {
 import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchCategories, createCategory, updateCategory, deleteCategory } from '../../store/slices/categorySlice';
 import { CategoryForm } from '../../types';
+import { useUserSettings } from '../../hooks/useUserSettings';
 
 const CategoriesPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { items: categories, loading, error } = useAppSelector((state) => state.categories);
+  const { getText } = useUserSettings();
   
   const [isVisible, setIsVisible] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
@@ -316,7 +318,7 @@ const CategoriesPage: React.FC = () => {
             
             <Chip
               icon={category.type === 'Income' ? <TrendingUp /> : <TrendingDown />}
-              label={category.type === 'Income' ? 'Thu nhập' : 'Chi tiêu'}
+              label={category.type === 'Income' ? getText('incomeType') : getText('expenseType')}
               color={category.type === 'Income' ? 'success' : 'error'}
               variant="outlined"
               size="small"
@@ -365,9 +367,9 @@ const CategoriesPage: React.FC = () => {
       <Fade in={isVisible} timeout={800}>
         <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box>
-            <Typography 
-              variant="h4" 
-              sx={{ 
+            <Typography
+              variant="h4"
+              sx={{
                 fontWeight: 700,
                 background: 'linear-gradient(135deg, #2c3e50 0%, #3498db 100%)',
                 backgroundClip: 'text',
@@ -376,10 +378,10 @@ const CategoriesPage: React.FC = () => {
                 mb: 1,
               }}
             >
-              📂 Quản Lý Danh Mục
+              📂 {getText('categoriesTitle')}
             </Typography>
             <Typography variant="h6" color="text.secondary">
-              Tạo và quản lý danh mục thu chi của bạn
+              {getText('categoriesSubtitle')}
             </Typography>
           </Box>
           
@@ -402,7 +404,7 @@ const CategoriesPage: React.FC = () => {
               transition: 'all 0.3s ease',
             }}
           >
-            Thêm Danh Mục
+            {getText('addCategory')}
           </Button>
         </Box>
       </Fade>
@@ -421,7 +423,7 @@ const CategoriesPage: React.FC = () => {
               gap: 1,
             }}
           >
-            <TrendingUp /> Thu Nhập ({incomeCategories.length})
+            <TrendingUp /> {getText('incomeCategories')} ({incomeCategories.length})
           </Typography>
           
           <Grid container spacing={3}>
@@ -434,7 +436,7 @@ const CategoriesPage: React.FC = () => {
               <Grid size={{ xs: 12 }}>
                 <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 3 }}>
                   <Typography color="text.secondary">
-                    Chưa có danh mục thu nhập nào. Hãy thêm danh mục đầu tiên!
+                    {getText('noIncomeCategories')}
                   </Typography>
                 </Paper>
               </Grid>
@@ -457,7 +459,7 @@ const CategoriesPage: React.FC = () => {
               gap: 1,
             }}
           >
-            <TrendingDown /> Chi Tiêu ({expenseCategories.length})
+            <TrendingDown /> {getText('expenseCategories')} ({expenseCategories.length})
           </Typography>
           
           <Grid container spacing={3}>
@@ -470,7 +472,7 @@ const CategoriesPage: React.FC = () => {
               <Grid size={{ xs: 12 }}>
                 <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 3 }}>
                   <Typography color="text.secondary">
-                    Chưa có danh mục chi tiêu nào. Hãy thêm danh mục đầu tiên!
+                    {getText('noExpenseCategories')}
                   </Typography>
                 </Paper>
               </Grid>
@@ -487,7 +489,7 @@ const CategoriesPage: React.FC = () => {
         fullWidth
       >
         <DialogTitle>
-          {editingCategory ? 'Chỉnh Sửa Danh Mục' : 'Thêm Danh Mục Mới'}
+          {editingCategory ? getText('editCategory') : getText('addNewCategory')}
         </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
@@ -500,14 +502,14 @@ const CategoriesPage: React.FC = () => {
             />
 
             <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel>Loại</InputLabel>
+              <InputLabel>{getText('categoryTypeLabel')}</InputLabel>
               <Select
                 value={formData.type}
-                label="Loại"
+                label={getText('categoryTypeLabel')}
                 onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as 'Income' | 'Expense' }))}
               >
-                <MenuItem value="Income">Thu nhập</MenuItem>
-                <MenuItem value="Expense">Chi tiêu</MenuItem>
+                <MenuItem value="Income">{getText('incomeType')}</MenuItem>
+                <MenuItem value="Expense">{getText('expenseType')}</MenuItem>
               </Select>
             </FormControl>
 

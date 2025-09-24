@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+/* eslint-disable react/jsx-props-no-spreading */
 import {
   Box,
   Paper,
   Typography,
-  Grid,
+
   Card,
   CardContent,
   Button,
@@ -33,6 +34,7 @@ import {
   Grow,
   Tabs,
   Tab,
+  Grid,
 } from '@mui/material';
 import {
   Person,
@@ -74,6 +76,7 @@ import {
   updateLocalSetting
 } from '../../store/slices/settingsSlice';
 import { updateUser } from '../../store/slices/authSlice';
+import { useUserSettings } from '../../hooks/useUserSettings';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -100,6 +103,7 @@ const SettingsPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { settings, backupHistory, loading, error } = useAppSelector((state) => state.settings);
+  const { getText } = useUserSettings();
   
   const [isVisible, setIsVisible] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
@@ -150,6 +154,11 @@ const SettingsPage: React.FC = () => {
     dispatch(fetchBackupHistory());
   }, [dispatch]);
 
+  // Debug log settings
+  useEffect(() => {
+    console.log('🔍 Settings Debug:', { settings, appSettings });
+  }, [settings]);
+
   const handleProfileSave = async () => {
     try {
       await dispatch(updateUser(profileData)).unwrap();
@@ -160,21 +169,26 @@ const SettingsPage: React.FC = () => {
   };
 
   const handleSettingChange = async (category: string, setting: string, value: any) => {
+    console.log('🔧 Settings Change:', { category, setting, value });
     try {
       // Update local state immediately for better UX
       dispatch(updateLocalSetting({ category, key: setting, value }));
-      
+
       // Determine the correct type
-      let type = 'string';
+      let type: 'string' | 'boolean' | 'number' | 'json' = 'string';
       if (typeof value === 'boolean') type = 'boolean';
       else if (typeof value === 'number') type = 'number';
-      
+
+      console.log('📤 Sending to backend:', { category, key: setting, value, type });
+
       // Update on backend
       await dispatch(updateSetting({ category, key: setting, value, type })).unwrap();
+
+      console.log('✅ Setting updated successfully');
     } catch (error) {
-      console.error('Failed to update setting:', error);
+      console.error('❌ Failed to update setting:', error);
       // Revert local change on error
-      dispatch(fetchSettings(category));
+      dispatch(fetchSettings());
     }
   };
 
@@ -265,17 +279,17 @@ const SettingsPage: React.FC = () => {
               mb: 1,
             }}
           >
-            ⚙️ Cài Đặt
+            ⚙️ {getText('settingsTitle')}
           </Typography>
           <Typography variant="h6" color="text.secondary">
-            Quản lý tài khoản và tùy chỉnh ứng dụng
+            {getText('settingsSubtitle')}
           </Typography>
         </Box>
       </Fade>
 
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', lg: 'row' } }}>
         {/* Profile Summary Card */}
-        <Grid item xs={12} lg={4}>
+        <Box sx={{ flex: { lg: '0 0 33%' } }}>
           <Slide direction="right" in={isVisible} timeout={1000}>
             <Paper
               sx={{
@@ -333,14 +347,14 @@ const SettingsPage: React.FC = () => {
                   fontWeight: 600,
                 }}
               >
-                Chỉnh Sửa Hồ Sơ
+                {getText('editProfile')}
               </Button>
             </Paper>
           </Slide>
-        </Grid>
+        </Box>
 
         {/* Settings Tabs */}
-        <Grid item xs={12} lg={8}>
+        <Box sx={{ flex: 1 }}>
           <Slide direction="left" in={isVisible} timeout={1200}>
             <Paper
               sx={{
@@ -389,7 +403,7 @@ const SettingsPage: React.FC = () => {
               <TabPanel value={activeTab} index={0}>
                 <Box sx={{ p: 3 }}>
                   <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
-                    Thông Tin Tài Khoản
+                    {getText('accountInfo')}
                   </Typography>
                   
                   <Grid container spacing={3}>
@@ -502,7 +516,7 @@ const SettingsPage: React.FC = () => {
               <TabPanel value={activeTab} index={1}>
                 <Box sx={{ p: 3 }}>
                   <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
-                    Cài Đặt Thông Báo
+                    {getText('notificationSettings')}
                   </Typography>
                   
                   <List>
@@ -587,7 +601,7 @@ const SettingsPage: React.FC = () => {
                         <Select
                           value={appSettings.theme}
                           label="Chủ đề"
-                          onChange={(e) => handleSettingChange('', 'theme', e.target.value)}
+                          onChange={(e) => handleSettingChange('appearance', 'theme', e.target.value)}
                         >
                           <MenuItem value="light">Sáng</MenuItem>
                           <MenuItem value="dark">Tối</MenuItem>
@@ -602,7 +616,7 @@ const SettingsPage: React.FC = () => {
                         <Select
                           value={appSettings.language}
                           label="Ngôn ngữ"
-                          onChange={(e) => handleSettingChange('', 'language', e.target.value)}
+                          onChange={(e) => handleSettingChange('appearance', 'language', e.target.value)}
                         >
                           <MenuItem value="vi">Tiếng Việt</MenuItem>
                           <MenuItem value="en">English</MenuItem>
@@ -616,7 +630,7 @@ const SettingsPage: React.FC = () => {
                         <Select
                           value={appSettings.currency}
                           label="Đơn vị tiền tệ"
-                          onChange={(e) => handleSettingChange('', 'currency', e.target.value)}
+                          onChange={(e) => handleSettingChange('appearance', 'currency', e.target.value)}
                         >
                           <MenuItem value="VND">VND (₫)</MenuItem>
                           <MenuItem value="USD">USD ($)</MenuItem>
@@ -803,8 +817,8 @@ const SettingsPage: React.FC = () => {
               </TabPanel>
             </Paper>
           </Slide>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
 
       {/* Backup Dialog */}
       <Dialog open={openBackupDialog} onClose={() => setOpenBackupDialog(false)}>
@@ -814,7 +828,7 @@ const SettingsPage: React.FC = () => {
             Bạn có muốn tạo bản sao lưu dữ liệu không? Quá trình này có thể mất vài phút.
           </Typography>
           <Alert severity="info">
-            Bản sao lưu sẽ bao gồm tất cả giao dịch, danh mục và cài đặt của bạn.
+            {getText('backupDescription')}
           </Alert>
         </DialogContent>
         <DialogActions>
@@ -841,7 +855,7 @@ const SettingsPage: React.FC = () => {
             <li>Tất cả giao dịch và lịch sử</li>
             <li>Danh mục và ngân sách</li>
             <li>Báo cáo và thống kê</li>
-            <li>Cài đặt cá nhân</li>
+            <li>{getText('personalSettings')}</li>
           </ul>
         </DialogContent>
         <DialogActions>

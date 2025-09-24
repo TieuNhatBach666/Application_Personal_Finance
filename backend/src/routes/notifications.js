@@ -37,14 +37,34 @@ router.get('/', authenticateToken, asyncHandler(async (req, res) => {
     });
 }));
 
-// Get notification counts
-router.get('/counts', authenticateToken, asyncHandler(async (req, res) => {
+// Get unread notification count (simple endpoint)
+router.get('/unread-count', authenticateToken, asyncHandler(async (req, res) => {
     const pool = getPool();
-    
+
     const result = await pool.request()
         .input('userId', req.user.id)
         .query(`
-            SELECT 
+            SELECT COUNT(*) as unreadCount
+            FROM Notifications
+            WHERE UserID = @userId AND IsRead = 0
+        `);
+
+    res.json({
+        success: true,
+        data: {
+            unreadCount: result.recordset[0]?.unreadCount || 0
+        }
+    });
+}));
+
+// Get notification counts
+router.get('/counts', authenticateToken, asyncHandler(async (req, res) => {
+    const pool = getPool();
+
+    const result = await pool.request()
+        .input('userId', req.user.id)
+        .query(`
+            SELECT
                 COUNT(*) as total,
                 COUNT(CASE WHEN IsRead = 0 THEN 1 END) as unread,
                 COUNT(CASE WHEN Type = 'warning' AND IsRead = 0 THEN 1 END) as warnings,

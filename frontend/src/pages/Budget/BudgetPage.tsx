@@ -50,12 +50,14 @@ import {
 } from '../../store/slices/budgetSlice';
 import { fetchCategories } from '../../store/slices/categorySlice';
 import { formatCurrencyCompact, formatCurrencyFull, formatPercentage } from '../../utils/formatCurrency';
+import { useUserSettings } from '../../hooks/useUserSettings';
 
 const BudgetPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { items: categories } = useAppSelector((state) => state.categories);
   const { budgets, summary: budgetSummary, loading } = useAppSelector((state) => state.budgets);
+  const { getText } = useUserSettings();
 
   const [isVisible, setIsVisible] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
@@ -343,10 +345,10 @@ const BudgetPage: React.FC = () => {
                 mb: 1,
               }}
             >
-              💰 Quản Lý Ngân Sách
+              💰 {getText('budgetManagement')}
             </Typography>
             <Typography variant="h6" color="text.secondary">
-              Theo dõi và kiểm soát chi tiêu của bạn
+              {getText('budgetSubtitle')}
             </Typography>
           </Box>
           
@@ -369,7 +371,7 @@ const BudgetPage: React.FC = () => {
               transition: 'all 0.3s ease',
             }}
           >
-            Tạo Ngân Sách
+            {getText('createBudget')}
           </Button>
         </Box>
       </Fade>
@@ -381,13 +383,21 @@ const BudgetPage: React.FC = () => {
             p: 4,
             mb: 4,
             borderRadius: 3,
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-            border: '1px solid #e9ecef',
+            background: (theme) => theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, #2d3748 0%, #1a202c 100%)'
+              : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+            border: (theme) => theme.palette.mode === 'dark'
+              ? '1px solid #4a5568'
+              : '1px solid #e9ecef',
             boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
           }}
         >
-          <Typography variant="h5" sx={{ fontWeight: 700, color: '#2c3e50', mb: 3 }}>
-            📊 Tổng Quan Ngân Sách Tháng Này
+          <Typography variant="h5" sx={{
+            fontWeight: 700,
+            color: (theme) => theme.palette.mode === 'dark' ? '#e2e8f0' : '#2c3e50',
+            mb: 3
+          }}>
+            📊 {getText('monthlyBudgetOverview')}
           </Typography>
           
           <Grid container spacing={3}>
@@ -480,10 +490,10 @@ const BudgetPage: React.FC = () => {
             }}
           >
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-              🚨 Cảnh báo: Có ngân sách đã vượt mức!
+              🚨 {getText('budgetExceededWarning')}
             </Typography>
             <Typography variant="body2">
-              Một hoặc nhiều ngân sách của bạn đã vượt quá giới hạn đề ra.
+              {getText('budgetExceededDesc')}
               Hãy xem lại chi tiêu và điều chỉnh kế hoạch tài chính.
             </Typography>
           </Alert>
@@ -502,10 +512,10 @@ const BudgetPage: React.FC = () => {
           <Grid size={{ xs: 12 }}>
             <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 3 }}>
               <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
-                Chưa có ngân sách nào được tạo
+                {getText('noBudgetsYet')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Hãy tạo ngân sách đầu tiên để bắt đầu quản lý chi tiêu
+                {getText('createFirstBudget')}
               </Typography>
               <Button
                 variant="contained"
@@ -513,7 +523,7 @@ const BudgetPage: React.FC = () => {
                 onClick={() => handleOpenDialog()}
                 sx={{ textTransform: 'none' }}
               >
-                Tạo Ngân Sách Đầu Tiên
+                {getText('createFirstBudgetBtn')}
               </Button>
             </Paper>
           </Grid>
@@ -528,7 +538,7 @@ const BudgetPage: React.FC = () => {
         fullWidth
       >
         <DialogTitle>
-          {editingBudget ? 'Chỉnh Sửa Ngân Sách' : 'Tạo Ngân Sách Mới'}
+          {editingBudget ? getText('editBudget') : getText('createNewBudget')}
         </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
@@ -617,7 +627,7 @@ const BudgetPage: React.FC = () => {
             disabled={!formData.name || !formData.totalAmount || loading}
             sx={{ textTransform: 'none' }}
           >
-            {loading ? 'Đang xử lý...' : (editingBudget ? 'Cập Nhật' : 'Tạo Ngân Sách')}
+            {loading ? getText('processing') : (editingBudget ? getText('update') : getText('createBudget'))}
           </Button>
         </DialogActions>
       </Dialog>

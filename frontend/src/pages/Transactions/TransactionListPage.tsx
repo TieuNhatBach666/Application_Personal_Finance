@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useUserSettings } from '../../hooks/useUserSettings';
 import {
   Box,
   Paper,
@@ -47,6 +48,7 @@ const TransactionListPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { items: transactions, loading, pagination, filters } = useAppSelector((state) => state.transactions);
   const { items: categories } = useAppSelector((state) => state.categories);
+  const { getText } = useUserSettings();
   
   const [isVisible, setIsVisible] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -131,19 +133,16 @@ const TransactionListPage: React.FC = () => {
           <Box>
             <Typography 
               variant="h4" 
-              sx={{ 
+              sx={{
                 fontWeight: 700,
-                background: 'linear-gradient(135deg, #2c3e50 0%, #3498db 100%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
+                color: 'primary.main',
                 mb: 1,
               }}
             >
-              💰 Danh Sách Giao Dịch
+              💰 {getText('transactionListTitle')}
             </Typography>
             <Typography variant="h6" color="text.secondary">
-              Quản lý tất cả thu chi của bạn
+              {getText('transactionListSubtitle')}
             </Typography>
           </Box>
           
@@ -152,21 +151,18 @@ const TransactionListPage: React.FC = () => {
             startIcon={<Add />}
             onClick={() => navigate(`/transactions/add?type=${getDefaultTransactionType()}`)}
             sx={{
-              background: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
               borderRadius: 2,
               px: 3,
               py: 1.5,
               textTransform: 'none',
               fontWeight: 600,
-              boxShadow: '0 8px 20px rgba(52, 152, 219, 0.3)',
               '&:hover': {
                 transform: 'translateY(-2px)',
-                boxShadow: '0 12px 25px rgba(52, 152, 219, 0.4)',
               },
               transition: 'all 0.3s ease',
             }}
           >
-            {getDefaultTransactionType() === 'Income' ? 'Thêm Thu Nhập' : 'Thêm Chi Tiêu'}
+            {getDefaultTransactionType() === 'Income' ? getText('addIncome') : getText('addExpense')}
           </Button>
         </Box>
       </Fade>
@@ -176,7 +172,7 @@ const TransactionListPage: React.FC = () => {
         <Paper sx={{ p: 3, mb: 3, borderRadius: 3 }}>
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
             <TextField
-              placeholder="Tìm kiếm giao dịch..."
+              placeholder={getText('searchTransactions')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               InputProps={{
@@ -190,10 +186,10 @@ const TransactionListPage: React.FC = () => {
             />
             
             <FormControl sx={{ minWidth: 150 }}>
-              <InputLabel>Loại</InputLabel>
+              <InputLabel>{getText('type')}</InputLabel>
               <Select
                 value={selectedType}
-                label="Loại"
+                label={getText('type')}
                 onChange={(e) => setSelectedType(e.target.value)}
               >
                 <MenuItem value="">Tất cả</MenuItem>
@@ -203,10 +199,10 @@ const TransactionListPage: React.FC = () => {
             </FormControl>
 
             <FormControl sx={{ minWidth: 200 }}>
-              <InputLabel>Danh mục</InputLabel>
+              <InputLabel>{getText('category')}</InputLabel>
               <Select
                 value={selectedCategory}
-                label="Danh mục"
+                label={getText('category')}
                 onChange={(e) => setSelectedCategory(e.target.value)}
               >
                 <MenuItem value="">Tất cả</MenuItem>
@@ -224,7 +220,7 @@ const TransactionListPage: React.FC = () => {
               onClick={handleSearch}
               sx={{ px: 3 }}
             >
-              Lọc
+              {getText('filterButton')}
             </Button>
           </Box>
         </Paper>
@@ -236,13 +232,13 @@ const TransactionListPage: React.FC = () => {
           <TableContainer>
             <Table>
               <TableHead>
-                <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
-                  <TableCell sx={{ fontWeight: 600 }}>Ngày</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Loại</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Danh mục</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Mô tả</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }} align="right">Số tiền</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }} align="center">Thao tác</TableCell>
+                <TableRow sx={{ backgroundColor: 'action.hover' }}>
+                  <TableCell sx={{ fontWeight: 600 }}>{getText('date')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{getText('type')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{getText('category')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{getText('description')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="right">{getText('amount')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="center">{getText('actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -265,7 +261,7 @@ const TransactionListPage: React.FC = () => {
                     <TableRow 
                       key={transaction.id}
                       sx={{ 
-                        '&:hover': { backgroundColor: '#f8f9fa' },
+                        '&:hover': { backgroundColor: 'action.hover' },
                         animation: `fadeInUp 0.5s ease ${index * 0.1}s both`,
                       }}
                     >
@@ -297,7 +293,7 @@ const TransactionListPage: React.FC = () => {
                           variant="body1"
                           sx={{
                             fontWeight: 600,
-                            color: transaction.type === 'Income' ? '#27ae60' : '#e74c3c',
+                            color: transaction.type === 'Income' ? 'success.main' : 'error.main',
                           }}
                         >
                           {transaction.type === 'Income' ? '+' : '-'}
@@ -308,7 +304,7 @@ const TransactionListPage: React.FC = () => {
                         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
                           <IconButton
                             size="small"
-                            sx={{ color: '#3498db' }}
+                            sx={{ color: 'info.main' }}
                             onClick={() => {
                               // TODO: Implement edit functionality
                               console.log('Edit transaction:', transaction.id);
@@ -318,7 +314,7 @@ const TransactionListPage: React.FC = () => {
                           </IconButton>
                           <IconButton
                             size="small"
-                            sx={{ color: '#e74c3c' }}
+                            sx={{ color: 'error.main' }}
                             onClick={() => handleDeleteClick(transaction.id)}
                           >
                             <Delete fontSize="small" />

@@ -37,7 +37,7 @@ import { fetchCategories } from '../../store/slices/categorySlice';
 import { fetchTransactionSummary, fetchTransactions } from '../../store/slices/transactionSlice';
 import { getCurrentUser } from '../../store/slices/authSlice';
 import { PieChart as RechartsePieChart, Pie, Cell, ResponsiveContainer, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { formatCurrencyCompact, formatCurrencyFull } from '../../utils/formatCurrency';
+import { useUserSettings } from '../../hooks/useUserSettings';
 import PieChart from '../../components/Charts/PieChart';
 import BarChart from '../../components/Charts/BarChart';
 import LineChart from '../../components/Charts/LineChart';
@@ -48,6 +48,7 @@ const DashboardPage: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
   const { items: categories } = useAppSelector((state) => state.categories);
   const { summary, items: recentTransactions, loading } = useAppSelector((state) => state.transactions);
+  const { formatCompact, formatFull, getText } = useUserSettings();
   const [isVisible, setIsVisible] = useState(true);
   const [activeChart, setActiveChart] = useState('pie');
   const [categoryData, setCategoryData] = useState<any[]>([]);
@@ -147,12 +148,7 @@ const DashboardPage: React.FC = () => {
   // Show loading indicator only when actually loading
   const isDataLoading = loading;
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(amount);
-  };
+  // Use formatFull from useUserSettings hook for full currency formatting
 
   const StatCard = ({
     title,
@@ -231,10 +227,10 @@ const DashboardPage: React.FC = () => {
                   Đang tải...
                 </Typography>
               </Box>
-            ) : title === 'Số giao dịch' ? (
-              `${value} giao dịch`
+            ) : title === getText('transactions') || title === 'Số giao dịch' ? (
+              `${value} ${getText('transactions')}`
             ) : (
-              formatCurrencyCompact(value)
+              formatCompact(value)
             )}
           </Typography>
         </CardContent>
@@ -243,7 +239,7 @@ const DashboardPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ p: 3, minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+    <Box sx={{ p: 3, minHeight: '100vh', backgroundColor: 'background.default' }}>
       {/* Welcome Section */}
       <Fade in={isVisible} timeout={800}>
         <Box sx={{ mb: 4 }}>
@@ -271,7 +267,7 @@ const DashboardPage: React.FC = () => {
                   mb: 0.5,
                 }}
               >
-                Chào mừng, {user?.firstName || 'Bạn'}! 👋
+                {getText('welcome')}, {user?.firstName || 'Bạn'}! 👋
               </Typography>
               <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 400 }}>
                 Đây là tổng quan tài chính của bạn trong tháng này
@@ -300,7 +296,7 @@ const DashboardPage: React.FC = () => {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="Thu nhập tháng này"
+            title={getText('incomeThisMonth')}
             value={summary?.totalIncome || 0}
             icon={<TrendingUp sx={{ color: 'white', fontSize: 28 }} />}
             color="#27ae60"
@@ -310,7 +306,7 @@ const DashboardPage: React.FC = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="Chi tiêu tháng này"
+            title={getText('expenseThisMonth')}
             value={summary?.totalExpense || 0}
             icon={<TrendingDown sx={{ color: 'white', fontSize: 28 }} />}
             color="#e74c3c"
@@ -320,7 +316,7 @@ const DashboardPage: React.FC = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="Tiết kiệm tháng này"
+            title={getText('savingsThisMonth')}
             value={summary?.netSavings || 0}
             icon={
               (summary?.netSavings || 0) >= 0 ?
@@ -334,7 +330,7 @@ const DashboardPage: React.FC = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="Số giao dịch"
+            title={getText('totalTransactions')}
             value={summary?.transactionCount || 0}
             icon={<Timeline sx={{ color: 'white', fontSize: 28 }} />}
             color="#9b59b6"
@@ -357,34 +353,43 @@ const DashboardPage: React.FC = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <Warning sx={{ color: '#e74c3c', fontSize: 32 }} />
-              <Typography variant="h6" sx={{ color: '#e74c3c', fontWeight: 700 }}>
-                🚨 Cảnh báo: Chi tiêu vượt thu nhập!
+              <Warning sx={{ color: 'error.main', fontSize: 32 }} />
+              <Typography variant="h6" sx={{ color: 'error.main', fontWeight: 700 }}>
+                🚨 {getText('warningTitle')}
               </Typography>
             </Box>
-            <Typography variant="body1" sx={{ color: '#2c3e50', mb: 2 }}>
-              Bạn đang chi tiêu nhiều hơn thu nhập. Số tiền thiếu hụt: <strong style={{ color: '#e74c3c' }}>
-                {formatCurrency(Math.abs(summary?.netSavings || 0))}
-              </strong>
+            <Typography variant="body1" sx={{ color: 'text.primary', mb: 2 }}>
+              {getText('warningMessage')} <Typography component="strong" sx={{ color: 'error.main' }}>
+                {formatFull(Math.abs(summary?.netSavings || 0))}
+              </Typography>
             </Typography>
-            <Typography variant="body2" sx={{ color: '#7f8c8d', mb: 3 }}>
-              💡 <strong>Gợi ý cải thiện:</strong>
+            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
+              💡 <strong>{getText('suggestions')}</strong>
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               <Chip
-                label="Giảm chi tiêu không cần thiết"
+                label={getText('reduceExpenses')}
                 size="small"
-                sx={{ backgroundColor: '#e74c3c20', color: '#e74c3c' }}
+                sx={{
+                  backgroundColor: (theme) => theme.palette.error.main + '20',
+                  color: 'error.main'
+                }}
               />
               <Chip
-                label="Tìm thêm nguồn thu nhập"
+                label={getText('increaseIncome')}
                 size="small"
-                sx={{ backgroundColor: '#27ae6020', color: '#27ae60' }}
+                sx={{
+                  backgroundColor: (theme) => theme.palette.success.main + '20',
+                  color: 'success.main'
+                }}
               />
               <Chip
-                label="Xem lại ngân sách"
+                label={getText('reviewBudget')}
                 size="small"
-                sx={{ backgroundColor: '#3498db20', color: '#3498db' }}
+                sx={{
+                  backgroundColor: (theme) => theme.palette.info.main + '20',
+                  color: 'info.main'
+                }}
               />
             </Box>
           </Paper>
@@ -411,7 +416,7 @@ const DashboardPage: React.FC = () => {
                   variant="h5"
                   sx={{
                     fontWeight: 700,
-                    color: '#2c3e50',
+                    color: 'text.primary',
                   }}
                 >
                   📊 Thống kê tài chính
@@ -514,11 +519,11 @@ const DashboardPage: React.FC = () => {
                   gutterBottom
                   sx={{
                     fontWeight: 700,
-                    color: '#2c3e50',
+                    color: 'text.primary',
                     mb: 3,
                   }}
                 >
-                  ⚡ Thao tác nhanh
+                  ⚡ {getText('quickActions')}
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <Button
@@ -542,7 +547,7 @@ const DashboardPage: React.FC = () => {
                       transition: 'all 0.3s ease',
                     }}
                   >
-                    Thêm Thu nhập
+                    {getText('addIncome')}
                   </Button>
                   <Button
                     variant="contained"
@@ -565,7 +570,7 @@ const DashboardPage: React.FC = () => {
                       transition: 'all 0.3s ease',
                     }}
                   >
-                    Thêm Chi tiêu
+                    {getText('addExpense')}
                   </Button>
                 </Box>
               </Paper>
@@ -587,7 +592,7 @@ const DashboardPage: React.FC = () => {
                     gutterBottom
                     sx={{
                       fontWeight: 700,
-                      color: '#2c3e50',
+                      color: 'text.primary',
                       mb: 3,
                     }}
                   >
@@ -608,7 +613,7 @@ const DashboardPage: React.FC = () => {
                           </Box>
                           <Box sx={{ textAlign: 'right' }}>
                             <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.85rem' }}>
-                              {formatCurrency(category.amount)}
+                              {formatFull(category.amount)}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
                               {category.percentage}%
@@ -635,10 +640,10 @@ const DashboardPage: React.FC = () => {
                   <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #e9ecef' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Typography variant="body1" sx={{ fontWeight: 700 }}>
-                        Tổng chi tiêu:
+                        {getText('totalExpensesLabel')}
                       </Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 700, color: '#e74c3c' }}>
-                        {formatCurrency(categoryBreakdown.reduce((sum, cat) => sum + cat.amount, 0))}
+                      <Typography variant="body1" sx={{ fontWeight: 700, color: 'error.main' }}>
+                        {formatFull(categoryBreakdown.reduce((sum, cat) => sum + cat.amount, 0))}
                       </Typography>
                     </Box>
                     <Button
@@ -651,15 +656,15 @@ const DashboardPage: React.FC = () => {
                         borderRadius: 2,
                         textTransform: 'none',
                         fontWeight: 600,
-                        borderColor: '#f39c12',
-                        color: '#f39c12',
+                        borderColor: 'warning.main',
+                        color: 'warning.main',
                         '&:hover': {
-                          borderColor: '#e67e22',
-                          backgroundColor: '#f39c1210',
+                          borderColor: 'warning.dark',
+                          backgroundColor: 'warning.light',
                         },
                       }}
                     >
-                      Xem chi tiết thống kê
+                      {getText('viewDetailedStats')}
                     </Button>
                   </Box>
                 </Paper>
@@ -681,16 +686,16 @@ const DashboardPage: React.FC = () => {
                   gutterBottom
                   sx={{
                     fontWeight: 700,
-                    color: '#2c3e50',
+                    color: 'text.primary',
                     mb: 2,
                   }}
                 >
-                  🕒 Hoạt động gần đây
+                  🕒 {getText('recentActivity')}
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                   <Box sx={{ textAlign: 'center', py: 2 }}>
                     <Typography variant="body2" color="text.secondary">
-                      Hoạt động gần đây sẽ hiển thị ở đây
+                      {getText('recentActivityDesc')}
                     </Typography>
                     <Button
                       variant="text"
@@ -698,7 +703,7 @@ const DashboardPage: React.FC = () => {
                       onClick={() => navigate('/transactions')}
                       sx={{ mt: 1, textTransform: 'none' }}
                     >
-                      Xem tất cả giao dịch
+                      {getText('viewAllTransactions')}
                     </Button>
                   </Box>
                 </Box>

@@ -53,6 +53,7 @@ import {
   Schedule,
   Star,
 } from '@mui/icons-material';
+import { useUserSettings } from '../../hooks/useUserSettings';
 
 interface Notification {
   id: string;
@@ -91,6 +92,7 @@ const NotificationsPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { items: notifications, unreadCount, loading, error } = useAppSelector((state) => state.notifications);
   const { settings } = useAppSelector((state) => state.settings);
+  const { getText } = useUserSettings();
   
   const [isVisible, setIsVisible] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
@@ -346,10 +348,10 @@ const NotificationsPage: React.FC = () => {
                 mb: 1,
               }}
             >
-              🔔 Thông Báo & Gợi Ý
+              🔔 {getText('notificationsTitle')}
             </Typography>
             <Typography variant="h6" color="text.secondary">
-              Theo dõi cảnh báo và nhận gợi ý tài chính thông minh
+              {getText('notificationsSubtitle')}
             </Typography>
           </Box>
           
@@ -360,7 +362,7 @@ const NotificationsPage: React.FC = () => {
               disabled={unreadCount === 0}
               sx={{ textTransform: 'none' }}
             >
-              Đánh dấu tất cả đã đọc
+              {getText('markAllAsRead')}
             </Button>
             <Badge badgeContent={unreadCount} color="error">
               <NotificationsActive sx={{ fontSize: 32, color: '#3498db' }} />
@@ -391,7 +393,7 @@ const NotificationsPage: React.FC = () => {
                   <Tab 
                     label={
                       <Badge badgeContent={notifications.length} color="primary" sx={{ '& .MuiBadge-badge': { right: -10 } }}>
-                        Tất cả
+                        {getText('allTab')}
                       </Badge>
                     } 
                     sx={{ textTransform: 'none', fontWeight: 600 }}
@@ -399,7 +401,7 @@ const NotificationsPage: React.FC = () => {
                   <Tab 
                     label={
                       <Badge badgeContent={unreadCount} color="error" sx={{ '& .MuiBadge-badge': { right: -10 } }}>
-                        Chưa đọc
+                        {getText('unreadTab')}
                       </Badge>
                     }
                     sx={{ textTransform: 'none', fontWeight: 600 }}
@@ -407,7 +409,7 @@ const NotificationsPage: React.FC = () => {
                   <Tab 
                     label={
                       <Badge badgeContent={warningCount} color="warning" sx={{ '& .MuiBadge-badge': { right: -10 } }}>
-                        Cảnh báo
+                        {getText('warningTab')}
                       </Badge>
                     }
                     sx={{ textTransform: 'none', fontWeight: 600 }}
@@ -415,7 +417,7 @@ const NotificationsPage: React.FC = () => {
                   <Tab 
                     label={
                       <Badge badgeContent={suggestionCount} color="info" sx={{ '& .MuiBadge-badge': { right: -10 } }}>
-                        Gợi ý
+                        {getText('suggestionTab')}
                       </Badge>
                     }
                     sx={{ textTransform: 'none', fontWeight: 600 }}
@@ -423,7 +425,7 @@ const NotificationsPage: React.FC = () => {
                   <Tab 
                     label={
                       <Badge badgeContent={achievementCount} color="success" sx={{ '& .MuiBadge-badge': { right: -10 } }}>
-                        Thành tựu
+                        {getText('achievementTab')}
                       </Badge>
                     }
                     sx={{ textTransform: 'none', fontWeight: 600 }}

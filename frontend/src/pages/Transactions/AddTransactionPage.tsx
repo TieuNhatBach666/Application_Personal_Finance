@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useUserSettings } from '../../hooks/useUserSettings';
 import {
   Box,
   Paper,
@@ -35,6 +36,7 @@ const AddTransactionPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { items: categories, loading: categoriesLoading } = useAppSelector((state) => state.categories);
   const { loading: transactionLoading, error } = useAppSelector((state) => state.transactions);
+  const { getText } = useUserSettings();
   
   // Determine default type based on referrer or URL params
   const getDefaultType = (): 'Income' | 'Expense' => {
@@ -129,10 +131,10 @@ const AddTransactionPage: React.FC = () => {
       {/* Header */}
       <Box sx={{ mb: 4, textAlign: 'center' }}>
         <Typography variant="h4" gutterBottom>
-          ➕ Thêm Giao Dịch
+          ➕ {getText('addTransactionTitle')}
         </Typography>
         <Typography variant="h6" color="text.secondary">
-          Ghi lại thu nhập hoặc chi tiêu của bạn
+          {getText('addTransactionSubtitle')}
         </Typography>
       </Box>
 
@@ -267,7 +269,7 @@ const AddTransactionPage: React.FC = () => {
               disabled={transactionLoading || !formData.categoryId || !formData.amount}
               sx={{ px: 4, py: 1.5 }}
             >
-              {transactionLoading ? 'Đang lưu...' : 'Lưu Giao Dịch'}
+              {transactionLoading ? getText('saving') : getText('saveTransaction')}
             </Button>
 
             <Button
@@ -277,7 +279,7 @@ const AddTransactionPage: React.FC = () => {
               onClick={handleCancel}
               sx={{ px: 4, py: 1.5 }}
             >
-              Hủy
+              {getText('cancel')}
             </Button>
           </Box>
         </Box>

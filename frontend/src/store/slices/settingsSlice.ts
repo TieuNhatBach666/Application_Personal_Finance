@@ -74,8 +74,9 @@ export const fetchSettings = createAsyncThunk(
   'settings/fetchSettings',
   async (category?: string, { rejectWithValue }) => {
     try {
+      console.log('🔄 Fetching settings...', { category });
       const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
-      const url = category 
+      const url = category
         ? `http://localhost:5000/api/settings/${category}`
         : 'http://localhost:5000/api/settings';
         
@@ -86,14 +87,18 @@ export const fetchSettings = createAsyncThunk(
         },
       });
 
+      console.log('📡 Settings API Response:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to fetch settings');
       }
 
       const data = await response.json();
+      console.log('✅ Settings fetched:', data);
       return { category, data: data.data };
     } catch (error: any) {
+      console.error('❌ Settings fetch error:', error);
       return rejectWithValue(error.message);
     }
   }

@@ -34,10 +34,12 @@ import PieChart from '../../components/Charts/PieChart';
 import BarChart from '../../components/Charts/BarChart';
 import LineChart from '../../components/Charts/LineChart';
 import { fetchCategories } from '../../store/slices/categorySlice';
+import { useUserSettings } from '../../hooks/useUserSettings';
 
 const StatisticsPage: React.FC = () => {
     const dispatch = useAppDispatch();
     const { summary } = useAppSelector((state) => state.transactions);
+    const { language, currency, formatFull, getText } = useUserSettings();
 
     const [isVisible, setIsVisible] = useState(false);
     const [activeChart, setActiveChart] = useState('pie');
@@ -114,20 +116,15 @@ const StatisticsPage: React.FC = () => {
         fetchStatistics();
     }, [dispatch, timePeriod]);
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND',
-        }).format(amount);
-    };
+    // Remove duplicate formatCurrency function - using from useUserSettings
 
     const getTimePeriodLabel = () => {
         switch (timePeriod) {
-            case 'week': return 'Tuần này';
-            case 'month': return 'Tháng này';
-            case 'quarter': return 'Quý này';
-            case 'year': return 'Năm này';
-            default: return 'Tháng này';
+            case 'week': return getText('thisWeek');
+            case 'month': return getText('thisMonth');
+            case 'quarter': return language === 'vi' ? 'Quý này' : 'This quarter';
+            case 'year': return getText('thisYear');
+            default: return getText('thisMonth');
         }
     };
 
@@ -204,7 +201,7 @@ const StatisticsPage: React.FC = () => {
                             fontSize: '1.8rem',
                         }}
                     >
-                        {formatCurrency(value)}
+                        {formatFull(value)}
                     </Typography>
                 </CardContent>
             </Card>
@@ -228,10 +225,10 @@ const StatisticsPage: React.FC = () => {
                                 mb: 1,
                             }}
                         >
-                            📊 Thống Kê & Báo Cáo
+                            📊 {getText('statisticsTitle')}
                         </Typography>
                         <Typography variant="h6" color="text.secondary">
-                            Phân tích chi tiết tình hình tài chính của bạn
+                            {getText('statisticsSubtitle')}
                         </Typography>
                     </Box>
 
@@ -243,10 +240,10 @@ const StatisticsPage: React.FC = () => {
                                 label="Thời gian"
                                 onChange={(e) => setTimePeriod(e.target.value)}
                             >
-                                <MenuItem value="week">Tuần này</MenuItem>
-                                <MenuItem value="month">Tháng này</MenuItem>
-                                <MenuItem value="quarter">Quý này</MenuItem>
-                                <MenuItem value="year">Năm này</MenuItem>
+                                <MenuItem value="week">{getText('thisWeek')}</MenuItem>
+                                <MenuItem value="month">{getText('thisMonth')}</MenuItem>
+                                <MenuItem value="quarter">{language === 'vi' ? 'Quý này' : 'This quarter'}</MenuItem>
+                                <MenuItem value="year">{getText('thisYear')}</MenuItem>
                             </Select>
                         </FormControl>
 
@@ -255,7 +252,7 @@ const StatisticsPage: React.FC = () => {
                             startIcon={<FileDownload />}
                             sx={{ textTransform: 'none' }}
                         >
-                            Xuất Báo Cáo
+                            {getText('exportReport')}
                         </Button>
                     </Box>
                 </Box>
@@ -265,7 +262,7 @@ const StatisticsPage: React.FC = () => {
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <StatCard
-                        title={`Thu nhập ${getTimePeriodLabel().toLowerCase()}`}
+                        title={`${getText('incomeThisMonth').replace('tháng này', getTimePeriodLabel().toLowerCase()).replace('this month', getTimePeriodLabel().toLowerCase())}`}
                         value={summary.totalIncome}
                         icon={<TrendingUp sx={{ color: 'white', fontSize: 28 }} />}
                         color="#27ae60"
@@ -275,7 +272,7 @@ const StatisticsPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <StatCard
-                        title={`Chi tiêu ${getTimePeriodLabel().toLowerCase()}`}
+                        title={`${getText('expenseThisMonth').replace('tháng này', getTimePeriodLabel().toLowerCase()).replace('this month', getTimePeriodLabel().toLowerCase())}`}
                         value={summary.totalExpense}
                         icon={<TrendingDown sx={{ color: 'white', fontSize: 28 }} />}
                         color="#e74c3c"
@@ -285,7 +282,7 @@ const StatisticsPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <StatCard
-                        title={`Tiết kiệm ${getTimePeriodLabel().toLowerCase()}`}
+                        title={`${getText('savingsThisMonth').replace('tháng này', getTimePeriodLabel().toLowerCase()).replace('this month', getTimePeriodLabel().toLowerCase())}`}
                         value={summary.netSavings}
                         icon={
                             summary.netSavings >= 0 ?
@@ -299,7 +296,7 @@ const StatisticsPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <StatCard
-                        title="Số giao dịch"
+                        title={getText('totalTransactions')}
                         value={summary.transactionCount}
                         icon={<Timeline sx={{ color: 'white', fontSize: 28 }} />}
                         color="#9b59b6"
@@ -324,31 +321,30 @@ const StatisticsPage: React.FC = () => {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                             <Warning sx={{ color: '#e74c3c', fontSize: 32 }} />
                             <Typography variant="h6" sx={{ color: '#e74c3c', fontWeight: 700 }}>
-                                🚨 Cảnh báo: Chi tiêu vượt thu nhập!
+                                🚨 {getText('warningTitle')}
                             </Typography>
                         </Box>
                         <Typography variant="body1" sx={{ color: '#2c3e50', mb: 2 }}>
-                            Trong {getTimePeriodLabel().toLowerCase()}, bạn đang chi tiêu nhiều hơn thu nhập.
-                            Số tiền thiếu hụt: <strong style={{ color: '#e74c3c' }}>
-                                {formatCurrency(Math.abs(summary.netSavings))}
+                            {getText('warningMessage').replace('{period}', getTimePeriodLabel().toLowerCase())} <strong style={{ color: '#e74c3c' }}>
+                                {formatFull(Math.abs(summary.netSavings))}
                             </strong>
                         </Typography>
                         <Typography variant="body2" sx={{ color: '#7f8c8d', mb: 3 }}>
-                            💡 <strong>Gợi ý cải thiện:</strong>
+                            💡 <strong>{getText('improvementSuggestions')}</strong>
                         </Typography>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                             <Chip
-                                label="Phân tích chi tiêu theo danh mục"
+                                label={getText('analyzeExpensesByCategory')}
                                 size="small"
                                 sx={{ backgroundColor: '#e74c3c20', color: '#e74c3c' }}
                             />
                             <Chip
-                                label="Đặt ngân sách chặt chẽ hơn"
+                                label={getText('setBudgetStricter')}
                                 size="small"
                                 sx={{ backgroundColor: '#f39c1220', color: '#f39c12' }}
                             />
                             <Chip
-                                label="Tìm nguồn thu nhập phụ"
+                                label={getText('findAdditionalIncome')}
                                 size="small"
                                 sx={{ backgroundColor: '#27ae6020', color: '#27ae60' }}
                             />
@@ -366,8 +362,12 @@ const StatisticsPage: React.FC = () => {
                             sx={{
                                 p: 3,
                                 borderRadius: 3,
-                                background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-                                border: '1px solid #e9ecef',
+                                background: (theme) => theme.palette.mode === 'dark'
+                                    ? 'linear-gradient(135deg, #2d3748 0%, #1a202c 100%)'
+                                    : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                                border: (theme) => theme.palette.mode === 'dark'
+                                    ? '1px solid #4a5568'
+                                    : '1px solid #e9ecef',
                                 boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
                                 minHeight: 400,
                             }}
@@ -377,16 +377,16 @@ const StatisticsPage: React.FC = () => {
                                     variant="h5"
                                     sx={{
                                         fontWeight: 700,
-                                        color: '#2c3e50',
+                                        color: (theme) => theme.palette.mode === 'dark' ? '#e2e8f0' : '#2c3e50',
                                     }}
                                 >
-                                    Chi Tiêu Theo Danh Mục - {getTimePeriodLabel()}
+                                    {getText('expensesByCategory')} - {getTimePeriodLabel()}
                                 </Typography>
                                 <Box sx={{ display: 'flex', gap: 1 }}>
                                     {[
-                                        { key: 'pie', icon: <PieChartIcon />, label: 'Tròn' },
-                                        { key: 'bar', icon: <BarChartIcon />, label: 'Cột' },
-                                        { key: 'line', icon: <ShowChart />, label: 'Đường' },
+                                        { key: 'pie', icon: <PieChartIcon />, label: getText('pieChart') },
+                                        { key: 'bar', icon: <BarChartIcon />, label: getText('barChart') },
+                                        { key: 'line', icon: <ShowChart />, label: getText('lineChart') },
                                     ].map((chart) => (
                                         <Button
                                             key={chart.key}
@@ -421,19 +421,19 @@ const StatisticsPage: React.FC = () => {
                                     >
                                         <LinearProgress sx={{ width: '50%' }} />
                                         <Typography variant="body2" color="text.secondary">
-                                            Đang tải dữ liệu thống kê...
+                                            {getText('loadingStats')}
                                         </Typography>
                                     </Box>
                                 ) : categoryBreakdown.length > 0 ? (
                                     <>
                                         {activeChart === 'pie' && (
-                                            <PieChart data={categoryBreakdown} title={`Chi tiêu theo danh mục - ${getTimePeriodLabel()}`} />
+                                            <PieChart data={categoryBreakdown} title={`${getText('expensesByCategory')} - ${getTimePeriodLabel()}`} />
                                         )}
                                         {activeChart === 'bar' && (
-                                            <BarChart data={categoryBreakdown} title={`Chi tiêu theo danh mục - ${getTimePeriodLabel()}`} />
+                                            <BarChart data={categoryBreakdown} title={`${getText('expensesByCategory')} - ${getTimePeriodLabel()}`} />
                                         )}
                                         {activeChart === 'line' && (
-                                            <LineChart data={categoryBreakdown} title={`Chi tiêu theo danh mục - ${getTimePeriodLabel()}`} />
+                                            <LineChart data={categoryBreakdown} title={`${getText('expensesByCategory')} - ${getTimePeriodLabel()}`} />
                                         )}
                                     </>
                                 ) : (
@@ -450,10 +450,10 @@ const StatisticsPage: React.FC = () => {
                                     >
                                         <ShowChart sx={{ fontSize: 64, opacity: 0.3 }} />
                                         <Typography variant="h6" color="text.secondary">
-                                            Chưa có dữ liệu thống kê
+                                            {getText('noStatsData')}
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary" textAlign="center">
-                                            Hãy tạo một số giao dịch để xem biểu đồ thống kê chi tiêu theo danh mục
+                                            {getText('noStatsMessage')}
                                         </Typography>
                                     </Box>
                                 )}
@@ -483,7 +483,7 @@ const StatisticsPage: React.FC = () => {
                                     mb: 3,
                                 }}
                             >
-                                📋 Chi Tiêu Theo Danh Mục
+                                📋 {getText('expensesByCategory')}
                             </Typography>
 
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -501,7 +501,7 @@ const StatisticsPage: React.FC = () => {
                                                 </Box>
                                                 <Box sx={{ textAlign: 'right' }}>
                                                     <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                                                        {formatCurrency(category.amount)}
+                                                        {formatFull(category.amount)}
                                                     </Typography>
                                                     <Typography variant="caption" color="text.secondary">
                                                         {category.percentage}%
@@ -548,10 +548,10 @@ const StatisticsPage: React.FC = () => {
                             <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid #e9ecef' }}>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                                        Tổng chi tiêu:
+                                        {getText('totalExpensesText')}:
                                     </Typography>
                                     <Typography variant="h6" sx={{ fontWeight: 700, color: '#e74c3c' }}>
-                                        {formatCurrency(summary.totalExpense)}
+                                        {formatFull(summary.totalExpense)}
                                     </Typography>
                                 </Box>
                             </Box>
