@@ -36,11 +36,13 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchCategories } from '../../store/slices/categorySlice';
 import { fetchTransactionSummary, fetchTransactions } from '../../store/slices/transactionSlice';
 import { getCurrentUser } from '../../store/slices/authSlice';
+import { fetchNotifications } from '../../store/slices/notificationSlice';
 import { PieChart as RechartsePieChart, Pie, Cell, ResponsiveContainer, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { useUserSettings } from '../../hooks/useUserSettings';
 import PieChart from '../../components/Charts/PieChart';
 import BarChart from '../../components/Charts/BarChart';
 import LineChart from '../../components/Charts/LineChart';
+import NotificationWarning from '../../components/NotificationWarning';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -76,14 +78,17 @@ const DashboardPage: React.FC = () => {
       console.log('🔄 Dashboard: Starting data fetch...');
       
       dispatch(fetchCategories());
-      
+
+      // Fetch notifications for warnings
+      dispatch(fetchNotifications({}));
+
       // Fetch current month's transaction summary
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-      
+
       console.log('📅 Dashboard: Fetching summary for', startOfMonth, 'to', endOfMonth);
-      
+
       // Fetch summary data (same as Statistics - no await)
       dispatch(fetchTransactionSummary({ startDate: startOfMonth, endDate: endOfMonth }));
       
@@ -339,62 +344,13 @@ const DashboardPage: React.FC = () => {
         </Grid>
       </Grid>
 
-      {/* Negative Savings Warning */}
-      {(summary?.netSavings || 0) < 0 && (
-        <Fade in={isVisible} timeout={1500}>
-          <Paper
-            sx={{
-              p: 3,
-              mb: 4,
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #e74c3c15 0%, #c0392b05 100%)',
-              border: '1px solid #e74c3c30',
-              boxShadow: '0 8px 25px rgba(231, 76, 60, 0.15)',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <Warning sx={{ color: 'error.main', fontSize: 32 }} />
-              <Typography variant="h6" sx={{ color: 'error.main', fontWeight: 700 }}>
-                🚨 {getText('warningTitle')}
-              </Typography>
-            </Box>
-            <Typography variant="body1" sx={{ color: 'text.primary', mb: 2 }}>
-              {getText('warningMessage')} <Typography component="strong" sx={{ color: 'error.main' }}>
-                {formatFull(Math.abs(summary?.netSavings || 0))}
-              </Typography>
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-              💡 <strong>{getText('suggestions')}</strong>
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              <Chip
-                label={getText('reduceExpenses')}
-                size="small"
-                sx={{
-                  backgroundColor: (theme) => theme.palette.error.main + '20',
-                  color: 'error.main'
-                }}
-              />
-              <Chip
-                label={getText('increaseIncome')}
-                size="small"
-                sx={{
-                  backgroundColor: (theme) => theme.palette.success.main + '20',
-                  color: 'success.main'
-                }}
-              />
-              <Chip
-                label={getText('reviewBudget')}
-                size="small"
-                sx={{
-                  backgroundColor: (theme) => theme.palette.info.main + '20',
-                  color: 'info.main'
-                }}
-              />
-            </Box>
-          </Paper>
-        </Fade>
-      )}
+      {/* Notification-based Warnings */}
+      <NotificationWarning
+        type="overspending"
+        variant="paper"
+        dismissible={true}
+        timeout={1500}
+      />
 
       {/* Main Content Grid */}
       <Grid container spacing={3}>

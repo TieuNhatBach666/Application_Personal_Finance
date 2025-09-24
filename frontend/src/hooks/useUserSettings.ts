@@ -1,13 +1,17 @@
 import { useAppSelector } from '../store';
 import { formatCurrencyCompact, formatCurrencyFull } from '../utils/formatCurrency';
+import { loadSettingsFromStorage } from '../utils/settingsStorage';
 
 export const useUserSettings = () => {
   const { settings } = useAppSelector((state) => state.settings);
 
-  // Get current settings with defaults
-  const theme = settings?.appearance?.theme || 'light';
-  const language = settings?.appearance?.language || 'vi';
-  const currency = settings?.appearance?.currency || 'VND';
+  // Load from localStorage as fallback
+  const localSettings = loadSettingsFromStorage();
+
+  // Get current settings with localStorage fallback
+  const theme = settings?.appearance?.theme || localSettings.appearance.theme;
+  const language = settings?.appearance?.language || localSettings.appearance.language;
+  const currency = settings?.appearance?.currency || localSettings.appearance.currency;
 
   // Currency formatting functions with user's currency
   const formatCompact = (amount: number) => formatCurrencyCompact(amount, currency);
@@ -165,6 +169,10 @@ export const useUserSettings = () => {
         unreadLabel: 'Chưa đọc:',
         warningLabel: 'Cảnh báo:',
         suggestionLabel: 'Gợi ý:',
+        weeklyReports: 'Báo cáo hàng tuần',
+        pushNotifications: 'Thông báo đẩy',
+        notificationStats: 'Thống Kê Thông Báo',
+        totalNotifications: 'Tổng thông báo:',
 
         // Budget Page
         budgetManagement: 'Quản Lý Ngân Sách',
@@ -330,6 +338,10 @@ export const useUserSettings = () => {
         unreadLabel: 'Unread:',
         warningLabel: 'Warnings:',
         suggestionLabel: 'Suggestions:',
+        weeklyReports: 'Weekly reports',
+        pushNotifications: 'Push notifications',
+        notificationStats: 'Notification Statistics',
+        totalNotifications: 'Total notifications:',
 
         // Budget Page
         budgetManagement: 'Budget Management',

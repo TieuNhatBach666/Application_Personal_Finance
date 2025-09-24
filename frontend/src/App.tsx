@@ -6,7 +6,8 @@ import { Provider } from 'react-redux';
 import { store } from './store';
 import { useAppDispatch, useAppSelector } from './store';
 import { getCurrentUser } from './store/slices/authSlice';
-import { fetchSettings } from './store/slices/settingsSlice';
+import { fetchSettings, updateLocalSetting } from './store/slices/settingsSlice';
+import { loadSettingsFromStorage } from './utils/settingsStorage';
 
 // Components
 import MainLayout from './components/Layout/MainLayout';
@@ -65,8 +66,14 @@ const AppContent: React.FC = () => {
 
   // Create theme based on user settings
   const theme = useMemo(() => {
-    const themeMode = settings?.appearance?.theme || 'light';
-    console.log('🎨 Theme Debug:', { settings, themeMode });
+    // Also check localStorage for immediate theme application
+    const localSettings = loadSettingsFromStorage();
+    const themeMode = settings?.appearance?.theme || localSettings.appearance.theme;
+    console.log('🎨 Theme Debug:', {
+      reduxSettings: settings,
+      localSettings: localSettings.appearance,
+      finalTheme: themeMode
+    });
     return createAppTheme(themeMode);
   }, [settings?.appearance?.theme]);
 
@@ -78,9 +85,21 @@ const AppContent: React.FC = () => {
   }, [dispatch, accessToken, isAuthenticated]);
 
   useEffect(() => {
-    // Fetch settings when user is authenticated
+    // Load settings from localStorage first for immediate UI update
+    const localSettings = loadSettingsFromStorage();
+    console.log('📱 Loading settings from localStorage:', localSettings);
+
+    // Update Redux store with localStorage settings
+    Object.entries(localSettings).forEach(([category, categorySettings]) => {
+      Object.entries(categorySettings as any).forEach(([key, value]) => {
+        dispatch(updateLocalSetting({ category, key, value }));
+      });
+    });
+
+    // Then sync with backend if authenticated (but don't override localStorage)
     if (isAuthenticated) {
-      dispatch(fetchSettings());
+      // Only fetch from backend for backup/sync purposes, don't override local settings
+      console.log('🔄 Syncing settings with backend...');
     }
   }, [dispatch, isAuthenticated]);
 

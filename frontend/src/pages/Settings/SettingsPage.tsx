@@ -75,8 +75,9 @@ import {
   resetSettings as resetSettingsAction,
   updateLocalSetting
 } from '../../store/slices/settingsSlice';
-import { updateUser } from '../../store/slices/authSlice';
+import { updateUser, getCurrentUser } from '../../store/slices/authSlice';
 import { useUserSettings } from '../../hooks/useUserSettings';
+import { saveSetting } from '../../utils/settingsStorage';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -103,7 +104,7 @@ const SettingsPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { settings, backupHistory, loading, error } = useAppSelector((state) => state.settings);
-  const { getText } = useUserSettings();
+  const { getText, theme, language, currency } = useUserSettings();
   
   const [isVisible, setIsVisible] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
@@ -123,11 +124,11 @@ const SettingsPage: React.FC = () => {
     avatar: user?.avatar || '',
   });
 
-  // Get settings from Redux store with fallbacks
+  // Get settings from useUserSettings (current active settings) and Redux store
   const appSettings = {
-    theme: settings.appearance?.theme || 'light',
-    language: settings.appearance?.language || 'vi',
-    currency: settings.appearance?.currency || 'VND',
+    theme: theme || settings.appearance?.theme || 'light',
+    language: language || settings.appearance?.language || 'vi',
+    currency: currency || settings.appearance?.currency || 'VND',
     notifications: {
       push: settings.notifications?.push || true,
       email: settings.notifications?.email || true,
@@ -149,10 +150,28 @@ const SettingsPage: React.FC = () => {
 
   useEffect(() => {
     setIsVisible(true);
-    // Load settings from backend
-    dispatch(fetchSettings());
+    // Only load backup history, don't fetch settings to avoid reset
     dispatch(fetchBackupHistory());
-  }, [dispatch]);
+
+    // Force reload user data if not available
+    if (!user || !user.firstName) {
+      console.log('👤 User data missing, fetching...');
+      dispatch(getCurrentUser());
+    }
+  }, [dispatch, user]);
+
+  // Update profile data when user data changes
+  useEffect(() => {
+    if (user) {
+      setProfileData(prev => ({
+        ...prev,
+        firstName: user.firstName || prev.firstName,
+        lastName: user.lastName || prev.lastName,
+        email: user.email || prev.email,
+        avatar: (user as any).avatar || prev.avatar,
+      }));
+    }
+  }, [user]);
 
   // Debug log settings
   useEffect(() => {
@@ -171,6 +190,9 @@ const SettingsPage: React.FC = () => {
   const handleSettingChange = async (category: string, setting: string, value: any) => {
     console.log('🔧 Settings Change:', { category, setting, value });
     try {
+      // Save to localStorage immediately for persistence
+      saveSetting(category as any, setting, value);
+
       // Update local state immediately for better UX
       dispatch(updateLocalSetting({ category, key: setting, value }));
 
@@ -264,9 +286,18 @@ const SettingsPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: 3, minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      {/* Header */}
-      <Fade in={isVisible} timeout={800}>
+    <Box sx={{
+      p: { xs: 2, md: 3 },
+      height: '100vh',
+      backgroundColor: (theme) => theme.palette.mode === 'dark' ? '#121212' : '#f5f5f5',
+      overflow: 'auto',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      {/* Scrollable Content Container */}
+      <Box sx={{ flex: 1, overflow: 'auto', pr: 1 }}>
+        {/* Header */}
+        <Fade in={isVisible} timeout={800}>
         <Box sx={{ mb: 4 }}>
           <Typography 
             variant="h4" 
@@ -407,7 +438,7 @@ const SettingsPage: React.FC = () => {
                   </Typography>
                   
                   <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <TextField
                         fullWidth
                         label="Họ"
@@ -416,7 +447,7 @@ const SettingsPage: React.FC = () => {
                         disabled={!editingProfile}
                       />
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <TextField
                         fullWidth
                         label="Tên"
@@ -425,7 +456,7 @@ const SettingsPage: React.FC = () => {
                         disabled={!editingProfile}
                       />
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <TextField
                         fullWidth
                         label="Email"
@@ -438,7 +469,7 @@ const SettingsPage: React.FC = () => {
                         }}
                       />
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <TextField
                         fullWidth
                         label="Số điện thoại"
@@ -450,7 +481,7 @@ const SettingsPage: React.FC = () => {
                         }}
                       />
                     </Grid>
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <TextField
                         fullWidth
                         label="Địa chỉ"
@@ -462,7 +493,7 @@ const SettingsPage: React.FC = () => {
                         }}
                       />
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <TextField
                         fullWidth
                         label="Nghề nghiệp"
@@ -474,7 +505,7 @@ const SettingsPage: React.FC = () => {
                         }}
                       />
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <TextField
                         fullWidth
                         label="Ngày sinh"
@@ -595,7 +626,7 @@ const SettingsPage: React.FC = () => {
                   </Typography>
                   
                   <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <FormControl fullWidth>
                         <InputLabel>Chủ đề</InputLabel>
                         <Select
@@ -610,7 +641,7 @@ const SettingsPage: React.FC = () => {
                       </FormControl>
                     </Grid>
                     
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <FormControl fullWidth>
                         <InputLabel>Ngôn ngữ</InputLabel>
                         <Select
@@ -624,7 +655,7 @@ const SettingsPage: React.FC = () => {
                       </FormControl>
                     </Grid>
                     
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <FormControl fullWidth>
                         <InputLabel>Đơn vị tiền tệ</InputLabel>
                         <Select
@@ -732,7 +763,7 @@ const SettingsPage: React.FC = () => {
                   </Alert>
                   
                   <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <Card sx={{ p: 2, textAlign: 'center' }}>
                         <CloudUpload sx={{ fontSize: 48, color: '#3498db', mb: 2 }} />
                         <Typography variant="h6" sx={{ mb: 1 }}>
@@ -752,7 +783,7 @@ const SettingsPage: React.FC = () => {
                       </Card>
                     </Grid>
                     
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <Card sx={{ p: 2, textAlign: 'center' }}>
                         <CloudDownload sx={{ fontSize: 48, color: '#27ae60', mb: 2 }} />
                         <Typography variant="h6" sx={{ mb: 1 }}>
@@ -772,7 +803,7 @@ const SettingsPage: React.FC = () => {
                       </Card>
                     </Grid>
                     
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <Card sx={{ p: 2 }}>
                         <Typography variant="h6" sx={{ mb: 2 }}>
                           Xuất Dữ Liệu
@@ -867,6 +898,7 @@ const SettingsPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      </Box>
     </Box>
   );
 };

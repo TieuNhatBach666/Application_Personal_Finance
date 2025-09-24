@@ -8,7 +8,6 @@ import transactionSlice from './slices/transactionSlice';
 import uiSlice from './slices/uiSlice';
 import budgetSlice from './slices/budgetSlice';
 import notificationSlice from './slices/notificationSlice';
-import notificationsSlice from './slices/notificationsSlice';
 import settingsSlice from './slices/settingsSlice';
 
 export const store = configureStore({
@@ -18,7 +17,7 @@ export const store = configureStore({
     transactions: transactionSlice,
     ui: uiSlice,
     budgets: budgetSlice,
-    notifications: notificationsSlice,
+    notifications: notificationSlice,
     settings: settingsSlice,
   },
   middleware: (getDefaultMiddleware) =>

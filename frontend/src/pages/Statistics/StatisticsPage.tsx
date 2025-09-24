@@ -16,6 +16,9 @@ import {
     Fade,
     Slide,
     Grow,
+    Menu,
+    ListItemIcon,
+    ListItemText,
 } from '@mui/material';
 import {
     PieChart as PieChartIcon,
@@ -27,14 +30,21 @@ import {
     Timeline,
     FileDownload,
     Warning,
+    Description,
+    TableChart,
+    PictureAsPdf,
+    ArrowDropDown,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchTransactionSummary } from '../../store/slices/transactionSlice';
+import { fetchNotifications } from '../../store/slices/notificationSlice';
 import PieChart from '../../components/Charts/PieChart';
 import BarChart from '../../components/Charts/BarChart';
 import LineChart from '../../components/Charts/LineChart';
 import { fetchCategories } from '../../store/slices/categorySlice';
 import { useUserSettings } from '../../hooks/useUserSettings';
+import NotificationWarning from '../../components/NotificationWarning';
+import { exportReport, ReportData } from '../../utils/exportService';
 
 const StatisticsPage: React.FC = () => {
     const dispatch = useAppDispatch();
@@ -46,6 +56,7 @@ const StatisticsPage: React.FC = () => {
     const [timePeriod, setTimePeriod] = useState('month');
     const [categoryData, setCategoryData] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [exportMenuAnchor, setExportMenuAnchor] = useState<null | HTMLElement>(null);
 
     useEffect(() => {
         const fetchStatistics = async () => {
@@ -82,6 +93,9 @@ const StatisticsPage: React.FC = () => {
 
                 // Fetch summary data
                 dispatch(fetchTransactionSummary({ startDate, endDate }));
+
+                // Fetch notifications for warnings
+                dispatch(fetchNotifications({}));
 
                 // Fetch category breakdown
                 const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
@@ -125,6 +139,63 @@ const StatisticsPage: React.FC = () => {
             case 'quarter': return language === 'vi' ? 'Quý này' : 'This quarter';
             case 'year': return getText('thisYear');
             default: return getText('thisMonth');
+        }
+    };
+
+    // Export report function với nhiều định dạng
+    const handleExportReport = async (format: 'json' | 'csv' | 'html' = 'html') => {
+        try {
+            const now = new Date();
+            let startDate: string, endDate: string;
+
+            // Calculate date range based on time period
+            switch (timePeriod) {
+                case 'week':
+                    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+                    startDate = startOfWeek.toISOString().split('T')[0];
+                    endDate = new Date(now.setDate(startOfWeek.getDate() + 6)).toISOString().split('T')[0];
+                    break;
+                case 'quarter':
+                    const quarter = Math.floor(now.getMonth() / 3);
+                    startDate = new Date(now.getFullYear(), quarter * 3, 1).toISOString().split('T')[0];
+                    endDate = new Date(now.getFullYear(), (quarter + 1) * 3, 0).toISOString().split('T')[0];
+                    break;
+                case 'year':
+                    startDate = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
+                    endDate = new Date(now.getFullYear(), 11, 31).toISOString().split('T')[0];
+                    break;
+                default:
+                    startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+                    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+            }
+
+            // Create report data
+            const reportData: ReportData = {
+                title: `Báo Cáo Thống Kê - ${getTimePeriodLabel()}`,
+                period: getTimePeriodLabel(),
+                dateRange: `${startDate} đến ${endDate}`,
+                summary: {
+                    totalIncome: summary.totalIncome || 0,
+                    totalExpense: summary.totalExpense || 0,
+                    netSavings: summary.netSavings || 0,
+                    transactionCount: summary.transactionCount || 0
+                },
+                categoryBreakdown: categoryBreakdown.map(cat => ({
+                    category: cat.name || cat.category || 'Không xác định',
+                    amount: cat.amount || 0,
+                    percentage: cat.percentage || 0
+                })),
+                generatedAt: new Date().toLocaleString('vi-VN'),
+                generatedBy: 'Ứng Dụng Quản Lý Tài Chính Cá Nhân'
+            };
+
+            // Export using service
+            await exportReport(reportData, format);
+
+            console.log(`📊 ${format.toUpperCase()} report exported successfully`);
+        } catch (error) {
+            console.error('❌ Failed to export report:', error);
+            alert('Có lỗi xảy ra khi xuất báo cáo. Vui lòng thử lại.');
         }
     };
 
@@ -250,10 +321,49 @@ const StatisticsPage: React.FC = () => {
                         <Button
                             variant="outlined"
                             startIcon={<FileDownload />}
+                            endIcon={<ArrowDropDown />}
+                            onClick={(e) => setExportMenuAnchor(e.currentTarget)}
                             sx={{ textTransform: 'none' }}
                         >
                             {getText('exportReport')}
                         </Button>
+                        <Menu
+                            anchorEl={exportMenuAnchor}
+                            open={Boolean(exportMenuAnchor)}
+                            onClose={() => setExportMenuAnchor(null)}
+                            anchorOrigin={{
+                                vertical: 'bottom',
+                                horizontal: 'left',
+                            }}
+                        >
+                            <MenuItem onClick={() => {
+                                handleExportReport('html');
+                                setExportMenuAnchor(null);
+                            }}>
+                                <ListItemIcon>
+                                    <PictureAsPdf fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>Xuất HTML (In PDF)</ListItemText>
+                            </MenuItem>
+                            <MenuItem onClick={() => {
+                                handleExportReport('csv');
+                                setExportMenuAnchor(null);
+                            }}>
+                                <ListItemIcon>
+                                    <TableChart fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>Xuất CSV (Excel)</ListItemText>
+                            </MenuItem>
+                            <MenuItem onClick={() => {
+                                handleExportReport('json');
+                                setExportMenuAnchor(null);
+                            }}>
+                                <ListItemIcon>
+                                    <Description fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>Xuất JSON (Dữ liệu)</ListItemText>
+                            </MenuItem>
+                        </Menu>
                     </Box>
                 </Box>
             </Fade>
@@ -305,53 +415,13 @@ const StatisticsPage: React.FC = () => {
                 </Grid>
             </Grid>
 
-            {/* Negative Savings Warning */}
-            {summary.netSavings < 0 && (
-                <Fade in={isVisible} timeout={1500}>
-                    <Paper
-                        sx={{
-                            p: 3,
-                            mb: 4,
-                            borderRadius: 3,
-                            background: 'linear-gradient(135deg, #e74c3c15 0%, #c0392b05 100%)',
-                            border: '1px solid #e74c3c30',
-                            boxShadow: '0 8px 25px rgba(231, 76, 60, 0.15)',
-                        }}
-                    >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                            <Warning sx={{ color: '#e74c3c', fontSize: 32 }} />
-                            <Typography variant="h6" sx={{ color: '#e74c3c', fontWeight: 700 }}>
-                                🚨 {getText('warningTitle')}
-                            </Typography>
-                        </Box>
-                        <Typography variant="body1" sx={{ color: '#2c3e50', mb: 2 }}>
-                            {getText('warningMessage').replace('{period}', getTimePeriodLabel().toLowerCase())} <strong style={{ color: '#e74c3c' }}>
-                                {formatFull(Math.abs(summary.netSavings))}
-                            </strong>
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: '#7f8c8d', mb: 3 }}>
-                            💡 <strong>{getText('improvementSuggestions')}</strong>
-                        </Typography>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                            <Chip
-                                label={getText('analyzeExpensesByCategory')}
-                                size="small"
-                                sx={{ backgroundColor: '#e74c3c20', color: '#e74c3c' }}
-                            />
-                            <Chip
-                                label={getText('setBudgetStricter')}
-                                size="small"
-                                sx={{ backgroundColor: '#f39c1220', color: '#f39c12' }}
-                            />
-                            <Chip
-                                label={getText('findAdditionalIncome')}
-                                size="small"
-                                sx={{ backgroundColor: '#27ae6020', color: '#27ae60' }}
-                            />
-                        </Box>
-                    </Paper>
-                </Fade>
-            )}
+            {/* Notification-based Warnings */}
+            <NotificationWarning
+                type="overspending"
+                variant="paper"
+                dismissible={true}
+                timeout={1500}
+            />
 
             {/* Charts Section */}
             <Grid container spacing={3}>

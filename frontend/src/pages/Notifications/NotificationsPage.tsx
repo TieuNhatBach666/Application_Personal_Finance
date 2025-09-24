@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { 
-  fetchNotifications, 
-  markAsRead, 
-  markAllAsRead, 
-  deleteNotification, 
-  getUnreadCount,
-  updateFilters
-} from '../../store/slices/notificationsSlice';
+import {
+  fetchNotifications,
+  markAsRead,
+  markAllAsRead,
+  deleteNotification,
+  fetchNotificationCounts
+} from '../../store/slices/notificationSlice';
 import {
   Box,
   Paper,
@@ -90,7 +89,8 @@ function TabPanel(props: TabPanelProps) {
 
 const NotificationsPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { items: notifications, unreadCount, loading, error } = useAppSelector((state) => state.notifications);
+  const { notifications, counts, loading, error } = useAppSelector((state) => state.notifications);
+  const unreadCount = counts?.unread || 0;
   const { settings } = useAppSelector((state) => state.settings);
   const { getText } = useUserSettings();
   
@@ -110,7 +110,7 @@ const NotificationsPage: React.FC = () => {
     setIsVisible(true);
     // Load notifications from backend
     dispatch(fetchNotifications());
-    dispatch(getUnreadCount());
+    dispatch(fetchNotificationCounts());
   }, [dispatch]);
 
   useEffect(() => {
@@ -132,7 +132,6 @@ const NotificationsPage: React.FC = () => {
         break;
     }
     
-    dispatch(updateFilters(filters));
     dispatch(fetchNotifications(filters));
   }, [activeTab, dispatch]);
 
@@ -332,9 +331,18 @@ const NotificationsPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ p: 3, minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      {/* Header */}
-      <Fade in={isVisible} timeout={800}>
+    <Box sx={{
+      p: { xs: 2, md: 3 },
+      height: '100vh',
+      backgroundColor: (theme) => theme.palette.mode === 'dark' ? '#121212' : '#f5f5f5',
+      overflow: 'auto',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      {/* Scrollable Content Container */}
+      <Box sx={{ flex: 1, overflow: 'auto', pr: 1 }}>
+        {/* Header */}
+        <Fade in={isVisible} timeout={800}>
         <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box>
             <Typography 
@@ -373,7 +381,7 @@ const NotificationsPage: React.FC = () => {
 
       <Grid container spacing={3}>
         {/* Main Content */}
-        <Grid item xs={12} lg={8}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Slide direction="up" in={isVisible} timeout={1000}>
             <Paper
               sx={{
@@ -437,7 +445,7 @@ const NotificationsPage: React.FC = () => {
                 <Box sx={{ p: 3 }}>
                   {getFilteredNotifications().length > 0 ? (
                     getFilteredNotifications().map((notification, index) => (
-                      <NotificationCard key={notification.id} notification={notification} index={index} />
+                      <NotificationCard key={`${notification.id}-${index}`} notification={notification} index={index} />
                     ))
                   ) : (
                     <Box sx={{ textAlign: 'center', py: 6 }}>
@@ -454,7 +462,7 @@ const NotificationsPage: React.FC = () => {
                 <Box sx={{ p: 3 }}>
                   {getFilteredNotifications().length > 0 ? (
                     getFilteredNotifications().map((notification, index) => (
-                      <NotificationCard key={notification.id} notification={notification} index={index} />
+                      <NotificationCard key={`${notification.id}-${index}`} notification={notification} index={index} />
                     ))
                   ) : (
                     <Box sx={{ textAlign: 'center', py: 6 }}>
@@ -471,7 +479,7 @@ const NotificationsPage: React.FC = () => {
                 <Box sx={{ p: 3 }}>
                   {getFilteredNotifications().length > 0 ? (
                     getFilteredNotifications().map((notification, index) => (
-                      <NotificationCard key={notification.id} notification={notification} index={index} />
+                      <NotificationCard key={`${notification.id}-${index}`} notification={notification} index={index} />
                     ))
                   ) : (
                     <Box sx={{ textAlign: 'center', py: 6 }}>
@@ -491,7 +499,7 @@ const NotificationsPage: React.FC = () => {
                 <Box sx={{ p: 3 }}>
                   {getFilteredNotifications().length > 0 ? (
                     getFilteredNotifications().map((notification, index) => (
-                      <NotificationCard key={notification.id} notification={notification} index={index} />
+                      <NotificationCard key={`${notification.id}-${index}`} notification={notification} index={index} />
                     ))
                   ) : (
                     <Box sx={{ textAlign: 'center', py: 6 }}>
@@ -508,7 +516,7 @@ const NotificationsPage: React.FC = () => {
                 <Box sx={{ p: 3 }}>
                   {getFilteredNotifications().length > 0 ? (
                     getFilteredNotifications().map((notification, index) => (
-                      <NotificationCard key={notification.id} notification={notification} index={index} />
+                      <NotificationCard key={`${notification.id}-${index}`} notification={notification} index={index} />
                     ))
                   ) : (
                     <Box sx={{ textAlign: 'center', py: 6 }}>
@@ -528,17 +536,25 @@ const NotificationsPage: React.FC = () => {
         </Grid>
 
         {/* Settings Sidebar */}
-        <Grid item xs={12} lg={4}>
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Slide direction="left" in={isVisible} timeout={1200}>
             <Paper
               sx={{
                 p: 3,
                 borderRadius: 3,
                 boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                background: (theme) => theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, #2d3748 0%, #1a202c 100%)'
+                  : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                border: (theme) => theme.palette.mode === 'dark'
+                  ? '1px solid #4a5568'
+                  : '1px solid #e9ecef',
+                maxHeight: { lg: 'calc(100vh - 200px)' },
+                overflowY: 'auto',
               }}
             >
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Settings /> Cài Đặt Thông Báo
+                <Settings /> {getText('notificationSettings')}
               </Typography>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -552,7 +568,7 @@ const NotificationsPage: React.FC = () => {
                       }}
                     />
                   }
-                  label="Cảnh báo ngân sách"
+                  label={getText('budgetAlerts')}
                 />
                 <FormControlLabel
                   control={
@@ -564,7 +580,7 @@ const NotificationsPage: React.FC = () => {
                       }}
                     />
                   }
-                  label="Gợi ý tiết kiệm"
+                  label={getText('savingTips')}
                 />
                 <FormControlLabel
                   control={
@@ -576,7 +592,7 @@ const NotificationsPage: React.FC = () => {
                       }}
                     />
                   }
-                  label="Thông báo thành tựu"
+                  label={getText('achievementNotifications')}
                 />
                 <FormControlLabel
                   control={
@@ -588,7 +604,7 @@ const NotificationsPage: React.FC = () => {
                       }}
                     />
                   }
-                  label="Báo cáo hàng tuần"
+                  label={getText('weeklyReports')}
                 />
                 <FormControlLabel
                   control={
@@ -600,31 +616,31 @@ const NotificationsPage: React.FC = () => {
                       }}
                     />
                   }
-                  label="Thông báo đẩy"
+                  label={getText('pushNotifications')}
                 />
               </Box>
 
               <Divider sx={{ my: 3 }} />
 
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                📊 Thống Kê Thông Báo
+                📊 {getText('notificationStats')}
               </Typography>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2">Tổng thông báo:</Typography>
+                  <Typography variant="body2">{getText('totalNotifications')}</Typography>
                   <Chip label={notifications.length} size="small" />
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2">Chưa đọc:</Typography>
+                  <Typography variant="body2">{getText('unreadLabel')}</Typography>
                   <Chip label={unreadCount} color="error" size="small" />
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2">Cảnh báo:</Typography>
+                  <Typography variant="body2">{getText('warningLabel')}</Typography>
                   <Chip label={warningCount} color="warning" size="small" />
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2">Gợi ý:</Typography>
+                  <Typography variant="body2">{getText('suggestionLabel')}</Typography>
                   <Chip label={suggestionCount} color="info" size="small" />
                 </Box>
               </Box>
@@ -632,6 +648,7 @@ const NotificationsPage: React.FC = () => {
           </Slide>
         </Grid>
       </Grid>
+      </Box>
     </Box>
   );
 };

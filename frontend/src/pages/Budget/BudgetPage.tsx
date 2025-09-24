@@ -39,25 +39,31 @@ import {
   NotificationsActive,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { 
-  fetchBudgets, 
+import {
+  fetchBudgets,
   fetchBudgetSummary,
-  createBudget, 
-  updateBudget, 
+  createBudget,
+  updateBudget,
   deleteBudget,
   Budget,
-  CreateBudgetData 
+  CreateBudgetData
 } from '../../store/slices/budgetSlice';
 import { fetchCategories } from '../../store/slices/categorySlice';
+import { fetchNotifications } from '../../store/slices/notificationSlice';
 import { formatCurrencyCompact, formatCurrencyFull, formatPercentage } from '../../utils/formatCurrency';
 import { useUserSettings } from '../../hooks/useUserSettings';
+import NotificationWarning from '../../components/NotificationWarning';
 
 const BudgetPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { items: categories } = useAppSelector((state) => state.categories);
   const { budgets, summary: budgetSummary, loading } = useAppSelector((state) => state.budgets);
+  const { settings } = useAppSelector((state) => state.settings);
   const { getText } = useUserSettings();
+
+  // Get currency from settings
+  const currency = settings.appearance?.currency || 'VND';
 
   const [isVisible, setIsVisible] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
@@ -77,14 +83,12 @@ const BudgetPage: React.FC = () => {
     dispatch(fetchBudgets());
     dispatch(fetchBudgetSummary());
     dispatch(fetchCategories());
+
+    // Fetch notifications for warnings
+    dispatch(fetchNotifications({}));
   }, [dispatch]);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(amount);
-  };
+  // Remove old formatCurrency function - using formatCurrencyCompact/Full with currency setting
 
   const getProgressColor = (percentage: number, warningThreshold: number) => {
     if (percentage >= 100) return '#e74c3c';
@@ -205,6 +209,7 @@ const BudgetPage: React.FC = () => {
         <Card
           sx={{
             height: '100%',
+            minHeight: '280px',
             background: `linear-gradient(135deg, ${budgetColor}15 0%, ${budgetColor}05 100%)`,
             border: `1px solid ${budgetColor}30`,
             borderRadius: 3,
@@ -286,9 +291,9 @@ const BudgetPage: React.FC = () => {
                 <Typography variant="caption" color="text.secondary">
                   Đã chi
                 </Typography>
-                <Tooltip title={formatCurrencyFull(spentAmount)} arrow>
+                <Tooltip title={formatCurrencyFull(spentAmount, currency)} arrow>
                   <Typography variant="body1" sx={{ fontWeight: 600, color: '#e74c3c' }}>
-                    {formatCurrencyCompact(spentAmount)}
+                    {formatCurrencyCompact(spentAmount, currency)}
                   </Typography>
                 </Tooltip>
               </Box>
@@ -296,24 +301,24 @@ const BudgetPage: React.FC = () => {
                 <Typography variant="caption" color="text.secondary">
                   Còn lại
                 </Typography>
-                <Tooltip title={formatCurrencyFull(remaining)} arrow>
-                  <Typography 
-                    variant="body1" 
-                    sx={{ 
-                      fontWeight: 600, 
-                      color: remaining >= 0 ? '#27ae60' : '#e74c3c' 
+                <Tooltip title={formatCurrencyFull(remaining, currency)} arrow>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      fontWeight: 600,
+                      color: remaining >= 0 ? '#27ae60' : '#e74c3c'
                     }}
                   >
-                    {formatCurrencyCompact(remaining)}
+                    {formatCurrencyCompact(remaining, currency)}
                   </Typography>
                 </Tooltip>
               </Box>
             </Box>
 
             <Box sx={{ pt: 2, borderTop: '1px solid #e9ecef' }}>
-              <Tooltip title={formatCurrencyFull(totalAmount)} arrow>
+              <Tooltip title={formatCurrencyFull(totalAmount, currency)} arrow>
                 <Typography variant="caption" color="text.secondary">
-                  Tổng ngân sách: {formatCurrencyCompact(totalAmount)}
+                  Tổng ngân sách: {formatCurrencyCompact(totalAmount, currency)}
                 </Typography>
               </Tooltip>
             </Box>
@@ -329,9 +334,18 @@ const BudgetPage: React.FC = () => {
   const overallPercentage = budgetSummary?.averageUsagePercentage || 0;
 
   return (
-    <Box sx={{ p: 3, minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      {/* Header */}
-      <Fade in={isVisible} timeout={800}>
+    <Box sx={{
+      p: { xs: 2, md: 3 },
+      height: '100vh',
+      backgroundColor: (theme) => theme.palette.mode === 'dark' ? '#121212' : '#f5f5f5',
+      overflow: 'auto',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      {/* Scrollable Content Container */}
+      <Box sx={{ flex: 1, overflow: 'auto', pr: 1 }}>
+        {/* Header */}
+        <Fade in={isVisible} timeout={800}>
         <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box>
             <Typography 
@@ -392,20 +406,20 @@ const BudgetPage: React.FC = () => {
             boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
           }}
         >
-          <Typography variant="h5" sx={{
+          <Typography variant="h6" sx={{
             fontWeight: 700,
             color: (theme) => theme.palette.mode === 'dark' ? '#e2e8f0' : '#2c3e50',
-            mb: 3
+            mb: 2
           }}>
             📊 {getText('monthlyBudgetOverview')}
           </Typography>
           
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 3 }}>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 6, md: 3 }}>
               <Box sx={{ textAlign: 'center' }}>
-                <Tooltip title={formatCurrencyFull(totalBudget)} arrow>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#3498db', mb: 1 }}>
-                    {formatCurrencyCompact(totalBudget)}
+                <Tooltip title={formatCurrencyFull(totalBudget, currency)} arrow>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: '#3498db', mb: 0.5 }}>
+                    {formatCurrencyCompact(totalBudget, currency)}
                   </Typography>
                 </Tooltip>
                 <Typography variant="body2" color="text.secondary">
@@ -413,11 +427,11 @@ const BudgetPage: React.FC = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 6, md: 3 }}>
               <Box sx={{ textAlign: 'center' }}>
-                <Tooltip title={formatCurrencyFull(totalSpent)} arrow>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#e74c3c', mb: 1 }}>
-                    {formatCurrencyCompact(totalSpent)}
+                <Tooltip title={formatCurrencyFull(totalSpent, currency)} arrow>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: '#e74c3c', mb: 0.5 }}>
+                    {formatCurrencyCompact(totalSpent, currency)}
                   </Typography>
                 </Tooltip>
                 <Typography variant="body2" color="text.secondary">
@@ -425,18 +439,18 @@ const BudgetPage: React.FC = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 6, md: 3 }}>
               <Box sx={{ textAlign: 'center' }}>
-                <Tooltip title={formatCurrencyFull(totalRemaining)} arrow>
-                  <Typography 
-                    variant="h4" 
-                    sx={{ 
-                      fontWeight: 700, 
+                <Tooltip title={formatCurrencyFull(totalRemaining, currency)} arrow>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: 700,
                       color: totalRemaining >= 0 ? '#27ae60' : '#e74c3c',
-                      mb: 1 
+                      mb: 0.5
                     }}
                   >
-                    {formatCurrencyCompact(totalRemaining)}
+                    {formatCurrencyCompact(totalRemaining, currency)}
                   </Typography>
                 </Tooltip>
                 <Typography variant="body2" color="text.secondary">
@@ -444,9 +458,9 @@ const BudgetPage: React.FC = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 6, md: 3 }}>
               <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" sx={{ fontWeight: 700, color: '#f39c12', mb: 1 }}>
+                <Typography variant="h5" sx={{ fontWeight: 700, color: '#f39c12', mb: 0.5 }}>
                   {Math.round(overallPercentage)}%
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -474,36 +488,18 @@ const BudgetPage: React.FC = () => {
         </Paper>
       </Slide>
 
-      {/* Budget Overspend Warning */}
-      {budgets.some(budget => {
-        const spentAmount = budget.SpentAmount || budget.spentAmount || 0;
-        const totalAmount = budget.BudgetAmount || budget.totalAmount || 1;
-        return (spentAmount / totalAmount) >= 1;
-      }) && (
-        <Fade in={isVisible} timeout={1500}>
-          <Alert
-            severity="error"
-            sx={{
-              mb: 3,
-              borderRadius: 3,
-              '& .MuiAlert-icon': { fontSize: 28 }
-            }}
-          >
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-              🚨 {getText('budgetExceededWarning')}
-            </Typography>
-            <Typography variant="body2">
-              {getText('budgetExceededDesc')}
-              Hãy xem lại chi tiêu và điều chỉnh kế hoạch tài chính.
-            </Typography>
-          </Alert>
-        </Fade>
-      )}
+      {/* Notification-based Budget Warnings */}
+      <NotificationWarning
+        type="budget"
+        variant="alert"
+        dismissible={true}
+        timeout={1500}
+      />
 
       {/* Budget Cards */}
-      <Grid container spacing={3}>
+      <Grid container spacing={3} sx={{ mb: 3 }}>
         {budgets.filter(budget => budget && budget.BudgetID).map((budget, index) => (
-          <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={budget.BudgetID || budget.id || index}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, xl: 3 }} key={budget.BudgetID || budget.id || index}>
             <BudgetCard budget={budget} index={index} />
           </Grid>
         ))}
@@ -631,6 +627,7 @@ const BudgetPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      </Box>
     </Box>
   );
 };
