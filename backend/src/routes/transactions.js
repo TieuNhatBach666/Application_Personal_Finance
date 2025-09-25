@@ -3,13 +3,13 @@ const sql = require('mssql');
 const { authenticateToken } = require('../middleware/auth');
 const { getPool } = require('../config/database');
 
-// Helper function to update budget spent amounts
+// Hàm hỗ trợ để cập nhật số tiền đã chi của ngân sách
 const updateBudgetSpentAmount = async (userId, categoryId) => {
   try {
     console.log('🔄 Starting budget update for userId:', userId, 'categoryId:', categoryId);
     const pool = getPool();
     
-    // Check if stored procedure exists
+    // Kiểm tra xem stored procedure có tồn tại không
     const checkProc = await pool.request().query(`
       SELECT COUNT(*) as count FROM sys.objects WHERE type = 'P' AND name = 'sp_UpdateBudgetSpentAmount'
     `);
@@ -118,7 +118,7 @@ const checkBudgetLimitAndNotify = async (userId, categoryId) => {
 
 const router = express.Router();
 
-// GET /api/transactions - Get user transactions
+// GET /api/transactions - Lấy danh sách giao dịch của user
 router.get('/', authenticateToken, async (req, res) => {
   try {
     console.log('📋 GET /api/transactions - User ID:', req.user.id);
@@ -198,7 +198,7 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-// POST /api/transactions - Create new transaction
+// POST /api/transactions - Tạo giao dịch mới
 router.post('/', authenticateToken, async (req, res) => {
   try {
     console.log('📝 POST /api/transactions - Request body:', req.body);
@@ -217,7 +217,7 @@ router.post('/', authenticateToken, async (req, res) => {
 
     const pool = getPool();
 
-    // Verify category belongs to user and has correct type
+    // Xác minh category thuộc về user và có đúng loại
     console.log('🔍 Checking category:', categoryId, 'for user:', req.user.id, 'type:', type);
     
     const categoryCheck = await pool.request()
@@ -243,7 +243,7 @@ router.post('/', authenticateToken, async (req, res) => {
     const category = categoryCheck.recordset[0];
     console.log('✅ Category found:', category.CategoryName);
 
-    // Create transaction
+    // Tạo giao dịch
     const transactionId = require('crypto').randomUUID();
     const now = new Date();
 
@@ -273,7 +273,7 @@ router.post('/', authenticateToken, async (req, res) => {
 
     console.log('✅ Transaction created successfully');
 
-    // Update budget spent amount if this is an expense transaction
+    // Cập nhật số tiền đã chi của ngân sách nếu đây là giao dịch chi tiêu
     if (type === 'Expense') {
       console.log('💰 Updating budget spent amount for category:', categoryId);
       await updateBudgetSpentAmount(req.user.id, categoryId);
@@ -282,7 +282,7 @@ router.post('/', authenticateToken, async (req, res) => {
       await checkBudgetLimitAndNotify(req.user.id, categoryId);
     }
 
-    // Return created transaction with category info
+    // Trả về giao dịch đã tạo cùng thông tin category
     const newTransaction = {
       id: transactionId,
       userId: req.user.id,
@@ -319,7 +319,7 @@ router.post('/', authenticateToken, async (req, res) => {
   }
 });
 
-// GET /api/transactions/summary - Get transaction summary
+// GET /api/transactions/summary - Lấy tóm tắt giao dịch
 router.get('/summary', authenticateToken, async (req, res) => {
   try {
     console.log('📊 GET /api/transactions/summary - User ID:', req.user.id);
@@ -362,7 +362,7 @@ router.get('/summary', authenticateToken, async (req, res) => {
   }
 });
 
-// DELETE /api/transactions/:id - Delete transaction
+// DELETE /api/transactions/:id - Xóa giao dịch
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     console.log('🗑️ DELETE /api/transactions/:id - Transaction ID:', req.params.id);
@@ -371,7 +371,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const pool = getPool();
 
-    // Check if transaction exists and belongs to user
+    // Kiểm tra xem giao dịch có tồn tại và thuộc về user không
     const existingTransaction = await pool.request()
       .input('transactionId', sql.UniqueIdentifier, id)
       .input('userId', sql.UniqueIdentifier, req.user.id)
@@ -392,12 +392,12 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     const transaction = existingTransaction.recordset[0];
     console.log('📄 Transaction to delete:', transaction);
 
-    // Delete the transaction
+    // Xóa giao dịch
     await pool.request()
       .input('transactionId', sql.UniqueIdentifier, id)
       .query(`DELETE FROM Transactions WHERE TransactionID = @transactionId`);
 
-    // Update budget spent amount if it's an expense
+    // Cập nhật số tiền đã chi của ngân sách nếu là chi tiêu
     if (transaction.Type === 'Expense') {
       await updateBudgetSpentAmount(req.user.id, transaction.CategoryID);
     }

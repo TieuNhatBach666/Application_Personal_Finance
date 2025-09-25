@@ -7,9 +7,9 @@ const { asyncHandler } = require('../middleware/errorHandler');
 
 const router = express.Router();
 
-// Get all budgets for user
+// Lấy tất cả ngân sách của user
 router.get('/', authenticateToken, asyncHandler(async (req, res) => {
-    // Disable cache để force refresh
+    // Vô hiệu hóa cache để force refresh
     res.set({
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
@@ -28,7 +28,7 @@ router.get('/', authenticateToken, asyncHandler(async (req, res) => {
     });
 }));
 
-// Get budget by ID
+// Lấy ngân sách theo ID
 router.get('/:id', authenticateToken, asyncHandler(async (req, res) => {
     const { id } = req.params;
     const pool = getPool();
@@ -71,11 +71,11 @@ router.get('/:id', authenticateToken, asyncHandler(async (req, res) => {
     });
 }));
 
-// Create new budget
+// Tạo ngân sách mới
 router.post('/', authenticateToken, asyncHandler(async (req, res) => {
     const { name, categoryId, totalAmount, period, warningThreshold, color } = req.body;
     
-    // Validation
+    // Xác thực dữ liệu
     if (!name || !totalAmount || !period) {
         return res.status(400).json({
             success: false,
@@ -100,7 +100,7 @@ router.post('/', authenticateToken, asyncHandler(async (req, res) => {
     const pool = getPool();
     const budgetId = uuidv4();
     
-    // Calculate date range based on period
+    // Tính toán khoảng thời gian dựa trên chu kỳ
     const now = new Date();
     let startDate, endDate;
     
@@ -154,7 +154,7 @@ router.post('/', authenticateToken, asyncHandler(async (req, res) => {
             )
         `);
     
-    // Update spent amount for the new budget
+    // Cập nhật số tiền đã chi cho ngân sách mới
     if (categoryId) {
         try {
             await pool.request()
@@ -167,7 +167,7 @@ router.post('/', authenticateToken, asyncHandler(async (req, res) => {
         }
     }
     
-    // Get the created budget
+    // Lấy ngân sách vừa tạo
     const result = await pool.request()
         .input('userId', req.user.id)
         .execute('sp_GetUserBudgets');
@@ -181,14 +181,14 @@ router.post('/', authenticateToken, asyncHandler(async (req, res) => {
     });
 }));
 
-// Update budget
+// Cập nhật ngân sách
 router.put('/:id', authenticateToken, asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { name, categoryId, totalAmount, period, warningThreshold, color } = req.body;
     
     const pool = getPool();
     
-    // Check if budget exists and belongs to user
+    // Kiểm tra xem ngân sách có tồn tại và thuộc về user không
     const existingBudget = await pool.request()
         .input('budgetId', id)
         .input('userId', req.user.id)
@@ -224,7 +224,7 @@ router.put('/:id', authenticateToken, asyncHandler(async (req, res) => {
             WHERE BudgetID = @budgetId
         `);
     
-    // Get updated budget
+    // Lấy ngân sách đã cập nhật
     const result = await pool.request()
         .input('userId', req.user.id)
         .execute('sp_GetUserBudgets');
@@ -238,12 +238,12 @@ router.put('/:id', authenticateToken, asyncHandler(async (req, res) => {
     });
 }));
 
-// Delete budget
+// Xóa ngân sách
 router.delete('/:id', authenticateToken, asyncHandler(async (req, res) => {
     const { id } = req.params;
     const pool = getPool();
     
-    // Check if budget exists and belongs to user
+    // Kiểm tra xem ngân sách có tồn tại và thuộc về user không
     const existingBudget = await pool.request()
         .input('budgetId', id)
         .input('userId', req.user.id)
@@ -259,7 +259,7 @@ router.delete('/:id', authenticateToken, asyncHandler(async (req, res) => {
         });
     }
     
-    // Soft delete
+    // Xóa mềm
     await pool.request()
         .input('budgetId', id)
         .query(`
@@ -275,14 +275,14 @@ router.delete('/:id', authenticateToken, asyncHandler(async (req, res) => {
     });
 }));
 
-// Update spent amount (called when transactions are added/updated)
+// Cập nhật số tiền đã chi (được gọi khi thêm/cập nhật giao dịch)
 router.patch('/:id/spent', authenticateToken, asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { spentAmount } = req.body;
     
     const pool = getPool();
     
-    // Manual update for this specific budget
+    // Cập nhật thủ công cho ngân sách cụ thể này
     await pool.request()
         .input('budgetId', id)
         .input('spentAmount', spentAmount)
@@ -298,9 +298,9 @@ router.patch('/:id/spent', authenticateToken, asyncHandler(async (req, res) => {
     });
 }));
 
-// Get budget summary
+// Lấy tóm tắt ngân sách
 router.get('/summary/current', authenticateToken, asyncHandler(async (req, res) => {
-    // Disable cache để force refresh
+    // Vô hiệu hóa cache để force refresh
     res.set({
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',

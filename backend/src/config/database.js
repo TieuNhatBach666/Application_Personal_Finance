@@ -19,7 +19,7 @@ const config = {
     }
 };
 
-// Schema information for existing database
+// Thông tin schema cho database hiện tại
 const SCHEMA_INFO = {
     ID_TYPE: 'UNIQUEIDENTIFIER',
     DEFAULT_CATEGORIES_USER_ID: process.env.DEFAULT_CATEGORIES_USER_ID,

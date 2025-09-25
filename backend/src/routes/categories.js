@@ -7,7 +7,7 @@ const { asyncHandler } = require('../middleware/errorHandler');
 
 const router = express.Router();
 
-// Fix Vietnamese encoding issues
+// Sửa lỗi encoding tiếng Việt
 const fixVietnameseEncoding = (text) => {
     if (!text) return text;
     
@@ -41,7 +41,7 @@ const fixVietnameseEncoding = (text) => {
     return fixed;
 };
 
-// Get all categories for user
+// Lấy tất cả categories của user
 router.get('/', authenticateToken, asyncHandler(async (req, res) => {
     const pool = getPool();
     
@@ -68,7 +68,7 @@ router.get('/', authenticateToken, asyncHandler(async (req, res) => {
     });
 }));
 
-// Get categories by type
+// Lấy categories theo loại
 router.get('/type/:type', authenticateToken, asyncHandler(async (req, res) => {
     const { type } = req.params;
     
@@ -106,13 +106,13 @@ router.get('/type/:type', authenticateToken, asyncHandler(async (req, res) => {
     });
 }));
 
-// Create new category
+// Tạo category mới
 router.post('/', authenticateToken, validate('createCategory'), asyncHandler(async (req, res) => {
     const { name, type, icon, color } = req.validatedData;
     
     const pool = getPool();
     
-    // Check if category name already exists for this user and type
+    // Kiểm tra xem tên category đã tồn tại cho user và loại này chưa
     const existingCategory = await pool.request()
         .input('userId', req.user.id)
         .input('name', name)
@@ -133,7 +133,7 @@ router.post('/', authenticateToken, validate('createCategory'), asyncHandler(asy
         });
     }
     
-    // Create new category
+    // Tạo category mới
     const categoryId = uuidv4();
     await pool.request()
         .input('categoryId', categoryId)
@@ -156,7 +156,7 @@ router.post('/', authenticateToken, validate('createCategory'), asyncHandler(asy
             )
         `);
     
-    // Get the created category
+    // Lấy category vừa tạo
     const result = await pool.request()
         .input('categoryId', categoryId)
         .query(`
@@ -179,14 +179,14 @@ router.post('/', authenticateToken, validate('createCategory'), asyncHandler(asy
     });
 }));
 
-// Update category
+// Cập nhật category
 router.put('/:id', authenticateToken, validate('createCategory'), asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { name, type, icon, color } = req.validatedData;
     
     const pool = getPool();
     
-    // Check if category exists and belongs to user
+    // Kiểm tra xem category có tồn tại và thuộc về user không
     const existingCategory = await pool.request()
         .input('categoryId', id)
         .input('userId', req.user.id)
@@ -205,7 +205,7 @@ router.put('/:id', authenticateToken, validate('createCategory'), asyncHandler(a
         });
     }
     
-    // Check if new name conflicts with existing categories
+    // Kiểm tra xem tên mới có xung đột với categories hiện có không
     const nameConflict = await pool.request()
         .input('categoryId', id)
         .input('userId', req.user.id)
@@ -228,7 +228,7 @@ router.put('/:id', authenticateToken, validate('createCategory'), asyncHandler(a
         });
     }
     
-    // Update category
+    // Cập nhật category
     await pool.request()
         .input('categoryId', id)
         .input('name', name)
@@ -246,7 +246,7 @@ router.put('/:id', authenticateToken, validate('createCategory'), asyncHandler(a
             WHERE ${SCHEMA_INFO.COLUMNS.CATEGORIES.ID} = @categoryId
         `);
     
-    // Get updated category
+    // Lấy category đã cập nhật
     const result = await pool.request()
         .input('categoryId', id)
         .query(`
@@ -269,13 +269,13 @@ router.put('/:id', authenticateToken, validate('createCategory'), asyncHandler(a
     });
 }));
 
-// Delete category
+// Xóa category
 router.delete('/:id', authenticateToken, asyncHandler(async (req, res) => {
     const { id } = req.params;
     
     const pool = getPool();
     
-    // Check if category exists and belongs to user
+    // Kiểm tra xem category có tồn tại và thuộc về user không
     const existingCategory = await pool.request()
         .input('categoryId', id)
         .input('userId', req.user.id)
@@ -294,7 +294,7 @@ router.delete('/:id', authenticateToken, asyncHandler(async (req, res) => {
         });
     }
     
-    // Check if category is being used in transactions
+    // Kiểm tra xem category có đang được sử dụng trong transactions không
     const transactionCount = await pool.request()
         .input('categoryId', id)
         .query(`
@@ -310,7 +310,7 @@ router.delete('/:id', authenticateToken, asyncHandler(async (req, res) => {
         });
     }
     
-    // Soft delete category
+    // Xóa mềm category
     await pool.request()
         .input('categoryId', id)
         .query(`

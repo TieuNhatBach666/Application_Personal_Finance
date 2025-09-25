@@ -8,7 +8,7 @@ require('dotenv').config();
 const { connectDB } = require('./config/database');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 
-// Import routes
+// Nhập các routes
 const authRoutes = require('./routes/auth');
 const categoryRoutes = require('./routes/categories');
 const transactionRoutes = require('./routes/transactions');
@@ -20,10 +20,10 @@ const settingsRoutes = require('./routes/settings');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Security middleware
+// Middleware bảo mật
 app.use(helmet());
 
-// CORS configuration
+// Cấu hình CORS
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
@@ -46,33 +46,33 @@ app.use(cors({
     optionsSuccessStatus: 200
 }));
 
-// Rate limiting - More lenient for development
+// Giới hạn tốc độ request - Dễ dàng hơn cho môi trường phát triển
 const limiter = rateLimit({
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 1 * 60 * 1000, // 1 minute
-    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000, // limit each IP to 1000 requests per minute
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 1 * 60 * 1000, // 1 phút
+    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000, // giới hạn mỗi IP 1000 requests mỗi phút
     message: {
         success: false,
         message: 'Quá nhiều yêu cầu từ IP này, vui lòng thử lại sau'
     },
-    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    standardHeaders: true, // Trả về thông tin rate limit trong headers `RateLimit-*`
+    legacyHeaders: false, // Tắt headers `X-RateLimit-*`
 });
 
-// Only apply rate limiting in production
+// Chỉ áp dụng rate limiting trong production
 if (process.env.NODE_ENV === 'production') {
     app.use(limiter);
 }
 
-// Body parsing middleware
+// Middleware xử lý body
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Logging middleware
+// Middleware logging
 if (process.env.NODE_ENV !== 'test') {
     app.use(morgan('combined'));
 }
 
-// Health check endpoint
+// Endpoint kiểm tra sức khỏe
 app.get('/health', (req, res) => {
     res.json({
         success: true,
@@ -82,7 +82,7 @@ app.get('/health', (req, res) => {
     });
 });
 
-// API routes
+// Các routes API
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/transactions', transactionRoutes);
@@ -91,19 +91,19 @@ app.use('/api/budgets', budgetRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/settings', settingsRoutes);
 
-// 404 handler
+// Xử lý 404
 app.use(notFoundHandler);
 
-// Global error handler
+// Xử lý lỗi toàn cục
 app.use(errorHandler);
 
-// Start server
+// Khởi động server
 const startServer = async () => {
     try {
-        // Connect to database
+        // Kết nối database
         await connectDB();
-        
-        // Start HTTP server
+
+        // Khởi động HTTP server
         app.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);
             console.log(`📊 Environment: ${process.env.NODE_ENV}`);
@@ -116,7 +116,7 @@ const startServer = async () => {
     }
 };
 
-// Graceful shutdown
+// Tắt server một cách graceful
 process.on('SIGTERM', async () => {
     console.log('🔄 SIGTERM received, shutting down gracefully...');
     const { closeDB } = require('./config/database');
@@ -131,19 +131,19 @@ process.on('SIGINT', async () => {
     process.exit(0);
 });
 
-// Handle unhandled promise rejections
+// Xử lý unhandled promise rejections
 process.on('unhandledRejection', (err) => {
     console.error('❌ Unhandled Promise Rejection:', err);
     process.exit(1);
 });
 
-// Handle uncaught exceptions
+// Xử lý uncaught exceptions
 process.on('uncaughtException', (err) => {
     console.error('❌ Uncaught Exception:', err);
     process.exit(1);
 });
 
-// Start the server
+// Khởi động server
 if (require.main === module) {
     startServer();
 }

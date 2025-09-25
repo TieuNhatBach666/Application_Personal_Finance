@@ -9,7 +9,7 @@ import { getCurrentUser } from './store/slices/authSlice';
 import { fetchSettings, updateLocalSetting } from './store/slices/settingsSlice';
 import { loadSettingsFromStorage } from './utils/settingsStorage';
 
-// Components
+// Các components
 import MainLayout from './components/Layout/MainLayout';
 import LoginPage from './pages/Auth/LoginPage';
 import RegisterPage from './pages/Auth/RegisterPage';
@@ -23,7 +23,7 @@ import NotificationsPage from './pages/Notifications/NotificationsPage';
 import SettingsPage from './pages/Settings/SettingsPage';
 
 
-// Create theme based on user settings
+// Tạo theme dựa trên cài đặt người dùng
 const createAppTheme = (themeMode: string) => {
   const isDark = themeMode === 'dark' || (themeMode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
@@ -47,7 +47,7 @@ const createAppTheme = (themeMode: string) => {
   });
 };
 
-// Protected Route Component
+// Component Route được bảo vệ
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   
@@ -58,15 +58,15 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <MainLayout>{children}</MainLayout>;
 };
 
-// App Content Component
+// Component nội dung chính của App
 const AppContent: React.FC = () => {
   const dispatch = useAppDispatch();
   const { isAuthenticated, accessToken } = useAppSelector((state) => state.auth);
   const { settings } = useAppSelector((state) => state.settings);
 
-  // Create theme based on user settings
+  // Tạo theme dựa trên cài đặt người dùng
   const theme = useMemo(() => {
-    // Also check localStorage for immediate theme application
+    // Cũng kiểm tra localStorage để áp dụng theme ngay lập tức
     const localSettings = loadSettingsFromStorage();
     const themeMode = settings?.appearance?.theme || localSettings.appearance.theme;
     console.log('🎨 Theme Debug:', {
@@ -78,27 +78,27 @@ const AppContent: React.FC = () => {
   }, [settings?.appearance?.theme]);
 
   useEffect(() => {
-    // If we have a token but no user data, fetch current user
+    // Nếu có token nhưng chưa có dữ liệu user, lấy thông tin user hiện tại
     if (accessToken && !isAuthenticated) {
       dispatch(getCurrentUser());
     }
   }, [dispatch, accessToken, isAuthenticated]);
 
   useEffect(() => {
-    // Load settings from localStorage first for immediate UI update
+    // Tải cài đặt từ localStorage trước để cập nhật UI ngay lập tức
     const localSettings = loadSettingsFromStorage();
     console.log('📱 Loading settings from localStorage:', localSettings);
 
-    // Update Redux store with localStorage settings
+    // Cập nhật Redux store với cài đặt từ localStorage
     Object.entries(localSettings).forEach(([category, categorySettings]) => {
       Object.entries(categorySettings as any).forEach(([key, value]) => {
         dispatch(updateLocalSetting({ category, key, value }));
       });
     });
 
-    // Then sync with backend if authenticated (but don't override localStorage)
+    // Sau đó đồng bộ với backend nếu đã xác thực (nhưng không ghi đè localStorage)
     if (isAuthenticated) {
-      // Only fetch from backend for backup/sync purposes, don't override local settings
+      // Chỉ lấy từ backend để backup/đồng bộ, không ghi đè cài đặt local
       console.log('🔄 Syncing settings with backend...');
     }
   }, [dispatch, isAuthenticated]);
@@ -108,11 +108,11 @@ const AppContent: React.FC = () => {
       <CssBaseline />
       <Router>
         <Routes>
-          {/* Public Routes */}
+          {/* Routes công khai */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
-          {/* Protected Routes */}
+          {/* Routes được bảo vệ */}
           <Route
             path="/dashboard"
             element={
@@ -122,7 +122,7 @@ const AppContent: React.FC = () => {
             }
           />
 
-          {/* Transaction Routes */}
+          {/* Routes giao dịch */}
           <Route
             path="/transactions/add"
             element={
@@ -197,7 +197,7 @@ const AppContent: React.FC = () => {
           />
 
 
-          {/* Default redirect */}
+          {/* Chuyển hướng mặc định */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

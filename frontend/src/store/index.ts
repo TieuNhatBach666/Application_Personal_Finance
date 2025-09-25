@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 
-// Import slices
+// Nhập các slices
 import authSlice from './slices/authSlice';
 import categorySlice from './slices/categorySlice';
 import transactionSlice from './slices/transactionSlice';
@@ -31,6 +31,6 @@ export const store = configureStore({
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 
-// Typed hooks
+// Hooks có kiểu dữ liệu
 export const useAppDispatch = () => useDispatch<AppDispatch>();
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

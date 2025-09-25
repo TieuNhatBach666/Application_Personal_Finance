@@ -1,4 +1,4 @@
-// Currency configuration
+// Cấu hình tiền tệ
 const CURRENCY_CONFIG = {
   VND: {
     symbol: '₫',
@@ -35,20 +35,20 @@ const CURRENCY_CONFIG = {
   }
 };
 
-// Utility để format số tiền ngắn gọn với currency setting
+// Hàm tiện ích để format số tiền ngắn gọn với cài đặt tiền tệ
 export const formatCurrencyCompact = (amount: number, currency: string = 'VND'): string => {
   if (amount === 0) return `0 ${CURRENCY_CONFIG[currency as keyof typeof CURRENCY_CONFIG]?.symbol || '₫'}`;
 
   const config = CURRENCY_CONFIG[currency as keyof typeof CURRENCY_CONFIG] || CURRENCY_CONFIG.VND;
   const absAmount = Math.abs(amount);
 
-  if (absAmount >= 1000000000000) { // Trillion
+  if (absAmount >= 1000000000000) { // Nghìn tỷ
     return `${(amount / 1000000000000).toFixed(1)}${config.compactUnits.trillion}`;
-  } else if (absAmount >= 1000000000) { // Billion
+  } else if (absAmount >= 1000000000) { // Tỷ
     return `${(amount / 1000000000).toFixed(1)} ${config.compactUnits.billion}`;
-  } else if (absAmount >= 1000000) { // Million
+  } else if (absAmount >= 1000000) { // Triệu
     return `${(amount / 1000000).toFixed(1)} ${config.compactUnits.million}`;
-  } else if (absAmount >= 1000) { // Thousand
+  } else if (absAmount >= 1000) { // Nghìn
     return `${(amount / 1000).toFixed(0)}${config.compactUnits.thousand}`;
   } else {
     const formatted = amount.toLocaleString(config.locale);
@@ -58,7 +58,7 @@ export const formatCurrencyCompact = (amount: number, currency: string = 'VND'):
   }
 };
 
-// Format đầy đủ cho tooltip với currency setting
+// Format đầy đủ cho tooltip với cài đặt tiền tệ
 export const formatCurrencyFull = (amount: number, currency: string = 'VND'): string => {
   const config = CURRENCY_CONFIG[currency as keyof typeof CURRENCY_CONFIG] || CURRENCY_CONFIG.VND;
   const formatted = amount.toLocaleString(config.locale);

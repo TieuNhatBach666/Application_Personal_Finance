@@ -164,7 +164,7 @@ const NotificationWarning: React.FC<NotificationWarningProps> = ({
               {notification.message}
             </Typography>
 
-            {/* Suggestions chips */}
+            {/* Chips gợi ý */}
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
               💡 <strong>{getText('suggestions')}</strong>
             </Typography>

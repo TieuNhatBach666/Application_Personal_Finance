@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-// API Configuration
+// Cấu hình API
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
-// Create axios instance
+// Tạo axios instance
 export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -12,7 +12,7 @@ export const api = axios.create({
   },
 });
 
-// Request interceptor to add auth token
+// Request interceptor để thêm auth token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
@@ -26,14 +26,14 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle errors
+// Response interceptor để xử lý lỗi
 api.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
+      // Token hết hạn hoặc không hợp lệ
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       window.location.href = '/login';
@@ -44,7 +44,7 @@ api.interceptors.response.use(
 
 // API Endpoints
 export const API_ENDPOINTS = {
-  // Authentication
+  // Xác thực
   AUTH: {
     REGISTER: '/auth/register',
     LOGIN: '/auth/login',
@@ -53,28 +53,28 @@ export const API_ENDPOINTS = {
     LOGOUT: '/auth/logout',
   },
   
-  // Categories
+  // Danh mục
   CATEGORIES: {
     BASE: '/categories',
     BY_TYPE: (type: string) => `/categories/type/${type}`,
     BY_ID: (id: string) => `/categories/${id}`,
   },
   
-  // Transactions (to be implemented)
+  // Giao dịch
   TRANSACTIONS: {
     BASE: '/transactions',
     BY_ID: (id: string) => `/transactions/${id}`,
     SUMMARY: '/transactions/summary',
   },
   
-  // Budgets (to be implemented)
+  // Ngân sách
   BUDGETS: {
     BASE: '/budgets',
     BY_ID: (id: string) => `/budgets/${id}`,
     PROGRESS: '/budgets/progress',
   },
   
-  // Statistics (to be implemented)
+  // Thống kê
   STATISTICS: {
     OVERVIEW: '/statistics/overview',
     BY_CATEGORY: '/statistics/by-category',

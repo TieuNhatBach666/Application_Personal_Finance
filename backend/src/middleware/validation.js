@@ -1,8 +1,8 @@
 const Joi = require('joi');
 
-// Validation schemas
+// Schemas xác thực
 const schemas = {
-    // User registration
+    // Đăng ký người dùng
     register: Joi.object({
         email: Joi.string().email().required().messages({
             'string.email': 'Email không hợp lệ',
@@ -27,7 +27,7 @@ const schemas = {
         })
     }),
 
-    // User login
+    // Đăng nhập người dùng
     login: Joi.object({
         email: Joi.string().email().required().messages({
             'string.email': 'Email không hợp lệ',
@@ -38,7 +38,7 @@ const schemas = {
         })
     }),
 
-    // Transaction creation
+    // Tạo giao dịch
     createTransaction: Joi.object({
         categoryId: Joi.string().guid().required().messages({
             'string.guid': 'ID danh mục không hợp lệ',
@@ -64,7 +64,7 @@ const schemas = {
         })
     }),
 
-    // Category creation
+    // Tạo danh mục
     createCategory: Joi.object({
         name: Joi.string().min(1).max(100).required().messages({
             'string.min': 'Tên danh mục không được để trống',
@@ -83,7 +83,7 @@ const schemas = {
         })
     }),
 
-    // Budget creation
+    // Tạo ngân sách
     createBudget: Joi.object({
         name: Joi.string().min(1).max(100).required().messages({
             'string.min': 'Tên ngân sách không được để trống',
@@ -114,7 +114,7 @@ const schemas = {
     })
 };
 
-// Validation middleware factory
+// Factory middleware xác thực
 const validate = (schemaName) => {
     return (req, res, next) => {
         const schema = schemas[schemaName];
@@ -148,7 +148,7 @@ const validate = (schemaName) => {
     };
 };
 
-// Query parameter validation
+// Xác thực tham số query
 const validateQuery = (schema) => {
     return (req, res, next) => {
         const { error, value } = schema.validate(req.query, {
@@ -174,7 +174,7 @@ const validateQuery = (schema) => {
     };
 };
 
-// Common query schemas
+// Schemas query phổ biến
 const querySchemas = {
     pagination: Joi.object({
         page: Joi.number().integer().min(1).default(1),

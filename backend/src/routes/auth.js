@@ -8,13 +8,13 @@ const { asyncHandler } = require('../middleware/errorHandler');
 
 const router = express.Router();
 
-// Register new user
+// Đăng ký người dùng mới
 router.post('/register', validate('register'), asyncHandler(async (req, res) => {
     const { email, password, firstName, lastName, phoneNumber } = req.validatedData;
-    
+
     const pool = getPool();
-    
-    // Check if user already exists
+
+    // Kiểm tra xem user đã tồn tại chưa
     const existingUser = await pool.request()
         .input('email', email)
         .query(`
@@ -30,11 +30,11 @@ router.post('/register', validate('register'), asyncHandler(async (req, res) => 
         });
     }
     
-    // Hash password
+    // Mã hóa mật khẩu
     const saltRounds = 12;
     const passwordHash = await bcrypt.hash(password, saltRounds);
-    
-    // Create new user
+
+    // Tạo user mới
     const userId = uuidv4();
     await pool.request()
         .input('userId', userId)
@@ -61,7 +61,7 @@ router.post('/register', validate('register'), asyncHandler(async (req, res) => 
             )
         `);
     
-    // Copy default categories for new user
+    // Sao chép các danh mục mặc định cho user mới
     await pool.request()
         .input('userId', userId)
         .input('defaultUserId', SCHEMA_INFO.DEFAULT_CATEGORIES_USER_ID)
@@ -87,7 +87,7 @@ router.post('/register', validate('register'), asyncHandler(async (req, res) => 
             WHERE ${SCHEMA_INFO.COLUMNS.CATEGORIES.USER_ID} = @defaultUserId
         `);
     
-    // Generate tokens
+    // Tạo tokens
     const { accessToken, refreshToken } = generateTokens(userId, email);
     
     res.status(201).json({
@@ -107,13 +107,13 @@ router.post('/register', validate('register'), asyncHandler(async (req, res) => 
     });
 }));
 
-// Login user
+// Đăng nhập người dùng
 router.post('/login', validate('login'), asyncHandler(async (req, res) => {
     const { email, password } = req.validatedData;
-    
+
     const pool = getPool();
-    
-    // Find user by email
+
+    // Tìm user theo email
     const result = await pool.request()
         .input('email', email)
         .query(`
@@ -138,15 +138,15 @@ router.post('/login', validate('login'), asyncHandler(async (req, res) => {
     
     const user = result.recordset[0];
     
-    // Check if user is active
+    // Kiểm tra xem user có đang hoạt động không
     if (!user[SCHEMA_INFO.COLUMNS.USERS.IS_ACTIVE]) {
         return res.status(401).json({
             success: false,
             message: 'Tài khoản đã bị vô hiệu hóa'
         });
     }
-    
-    // Verify password
+
+    // Xác minh mật khẩu
     const isValidPassword = await bcrypt.compare(password, user[SCHEMA_INFO.COLUMNS.USERS.PASSWORD_HASH]);
     
     if (!isValidPassword) {
@@ -156,9 +156,9 @@ router.post('/login', validate('login'), asyncHandler(async (req, res) => {
         });
     }
     
-    // Generate tokens
+    // Tạo tokens
     const { accessToken, refreshToken } = generateTokens(
-        user[SCHEMA_INFO.COLUMNS.USERS.ID], 
+        user[SCHEMA_INFO.COLUMNS.USERS.ID],
         user[SCHEMA_INFO.COLUMNS.USERS.EMAIL]
     );
     
@@ -179,7 +179,7 @@ router.post('/login', validate('login'), asyncHandler(async (req, res) => {
     });
 }));
 
-// Get current user profile
+// Lấy thông tin profile người dùng hiện tại
 router.get('/me', authenticateToken, asyncHandler(async (req, res) => {
     const pool = getPool();
     
@@ -227,14 +227,14 @@ router.get('/me', authenticateToken, asyncHandler(async (req, res) => {
     });
 }));
 
-// Update user profile
+// Cập nhật thông tin profile người dùng
 router.put('/profile', authenticateToken, asyncHandler(async (req, res) => {
     const { firstName, lastName, phoneNumber, avatarUrl, currency, language, timezone } = req.body;
     const userId = req.user.id;
     
     const pool = getPool();
     
-    // Build dynamic update query
+    // Xây dựng câu query update động
     const updates = [];
     const inputs = [{ name: 'userId', value: userId }];
     
@@ -274,7 +274,7 @@ router.put('/profile', authenticateToken, asyncHandler(async (req, res) => {
         });
     }
     
-    // Update user
+    // Cập nhật user
     const request = pool.request();
     inputs.forEach(input => request.input(input.name, input.value));
     
@@ -284,7 +284,7 @@ router.put('/profile', authenticateToken, asyncHandler(async (req, res) => {
         WHERE ${SCHEMA_INFO.COLUMNS.USERS.ID} = @userId
     `);
     
-    // Get updated user data
+    // Lấy dữ liệu user đã cập nhật
     const result = await pool.request()
         .input('userId', userId)
         .query(`
@@ -323,7 +323,7 @@ router.put('/profile', authenticateToken, asyncHandler(async (req, res) => {
     });
 }));
 
-// Logout (client-side token removal)
+// Đăng xuất (xóa token ở phía client)
 router.post('/logout', authenticateToken, (req, res) => {
     res.json({
         success: true,

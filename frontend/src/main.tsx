@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 
-// Debug: Check if root element exists
+// Debug: Kiểm tra xem root element có tồn tại không
 const rootElement = document.getElementById('root');
 console.log('🔍 Root element:', rootElement);
 

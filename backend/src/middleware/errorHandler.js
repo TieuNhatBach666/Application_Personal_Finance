@@ -1,33 +1,33 @@
 const errorHandler = (err, req, res, next) => {
     console.error('Error:', err);
 
-    // Default error
+    // Lỗi mặc định
     let error = {
         success: false,
         message: 'Lỗi server nội bộ',
         statusCode: 500
     };
 
-    // SQL Server errors
+    // Lỗi SQL Server
     if (err.name === 'RequestError') {
         error.message = 'Lỗi truy vấn cơ sở dữ liệu';
         error.statusCode = 400;
     }
 
-    // Connection errors
+    // Lỗi kết nối
     if (err.name === 'ConnectionError') {
         error.message = 'Lỗi kết nối cơ sở dữ liệu';
         error.statusCode = 503;
     }
 
-    // Validation errors
+    // Lỗi xác thực
     if (err.name === 'ValidationError') {
         error.message = 'Dữ liệu không hợp lệ';
         error.statusCode = 400;
         error.details = err.details;
     }
 
-    // JWT errors
+    // Lỗi JWT
     if (err.name === 'JsonWebTokenError') {
         error.message = 'Token không hợp lệ';
         error.statusCode = 401;
@@ -38,25 +38,25 @@ const errorHandler = (err, req, res, next) => {
         error.statusCode = 401;
     }
 
-    // Duplicate key error (unique constraint)
+    // Lỗi khóa trùng lặp (ràng buộc duy nhất)
     if (err.number === 2627 || err.number === 2601) {
         error.message = 'Dữ liệu đã tồn tại';
         error.statusCode = 409;
     }
 
-    // Foreign key constraint error
+    // Lỗi ràng buộc khóa ngoại
     if (err.number === 547) {
         error.message = 'Dữ liệu tham chiếu không hợp lệ';
         error.statusCode = 400;
     }
 
-    // Custom application errors
+    // Lỗi ứng dụng tùy chỉnh
     if (err.statusCode) {
         error.statusCode = err.statusCode;
         error.message = err.message;
     }
 
-    // Don't leak error details in production
+    // Không tiết lộ chi tiết lỗi trong production
     if (process.env.NODE_ENV === 'production') {
         delete error.stack;
     } else {
@@ -75,7 +75,7 @@ const notFoundHandler = (req, res) => {
     });
 };
 
-// Async error wrapper
+// Wrapper lỗi async
 const asyncHandler = (fn) => {
     return (req, res, next) => {
         Promise.resolve(fn(req, res, next)).catch(next);

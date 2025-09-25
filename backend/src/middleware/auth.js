@@ -14,8 +14,8 @@ const authenticateToken = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        
-        // Verify user still exists and is active
+
+        // Xác minh user vẫn tồn tại và đang hoạt động
         const pool = getPool();
         const result = await pool.request()
             .input('userId', decoded.userId)

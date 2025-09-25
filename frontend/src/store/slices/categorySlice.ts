@@ -104,7 +104,7 @@ const categorySlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Fetch categories
+    // Lấy danh sách categories
     builder
       .addCase(fetchCategories.pending, (state) => {
         state.loading = true;
@@ -119,7 +119,7 @@ const categorySlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // Fetch categories by type
+    // Lấy categories theo loại
     builder
       .addCase(fetchCategoriesByType.pending, (state) => {
         state.loading = true;
@@ -127,7 +127,7 @@ const categorySlice = createSlice({
       })
       .addCase(fetchCategoriesByType.fulfilled, (state, action: PayloadAction<Category[]>) => {
         state.loading = false;
-        // Update items with new categories, keeping existing ones from other types
+        // Cập nhật items với categories mới, giữ lại những cái hiện có từ các loại khác
         const newCategories = action.payload;
         const existingCategories = state.items.filter(
           item => !newCategories.some(newCat => newCat.type === item.type)
@@ -139,7 +139,7 @@ const categorySlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // Create category
+    // Tạo category
     builder
       .addCase(createCategory.pending, (state) => {
         state.loading = true;
@@ -154,7 +154,7 @@ const categorySlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // Update category
+    // Cập nhật category
     builder
       .addCase(updateCategory.pending, (state) => {
         state.loading = true;
@@ -172,7 +172,7 @@ const categorySlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // Delete category
+    // Xóa category
     builder
       .addCase(deleteCategory.pending, (state) => {
         state.loading = true;
