@@ -20,6 +20,7 @@ import {
   Notifications,
   Settings,
   Category,
+  Info,
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useUserSettings } from '../../hooks/useUserSettings';
@@ -77,6 +78,11 @@ const Sidebar: React.FC<SidebarProps> = ({ drawerWidth }) => {
       text: getText('settings'),
       icon: <Settings />,
       path: '/settings',
+    },
+    {
+      text: 'Thông Tin',
+      icon: <Info />,
+      path: '/about',
     },
   ];
 

@@ -21,6 +21,7 @@ import StatisticsPage from './pages/Statistics/StatisticsPage';
 import BudgetPage from './pages/Budget/BudgetPage';
 import NotificationsPage from './pages/Notifications/NotificationsPage';
 import SettingsPage from './pages/Settings/SettingsPage';
+import AboutPage from './pages/About/AboutPage';
 
 
 // Tạo theme dựa trên cài đặt người dùng
@@ -195,7 +196,14 @@ const AppContent: React.FC = () => {
               </ProtectedRoute>
             }
           />
-
+          <Route
+            path="/about"
+            element={
+              <ProtectedRoute>
+                <AboutPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Chuyển hướng mặc định */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
