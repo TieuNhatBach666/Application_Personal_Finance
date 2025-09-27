@@ -58,7 +58,7 @@ const BudgetPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { items: categories } = useAppSelector((state) => state.categories);
-  const { budgets, summary: budgetSummary, loading } = useAppSelector((state) => state.budgets);
+  const { budgets, summary: budgetSummary, loading, error } = useAppSelector((state) => state.budgets);
   const { settings } = useAppSelector((state) => state.settings);
   const { getText } = useUserSettings();
 
@@ -87,6 +87,11 @@ const BudgetPage: React.FC = () => {
     // Fetch notifications for warnings
     dispatch(fetchNotifications({}));
   }, [dispatch]);
+
+  // Debug: Log budgets data
+  useEffect(() => {
+    console.log('🔍 Budgets Debug:', { budgets, loading, error });
+  }, [budgets, loading, error]);
 
   // Remove old formatCurrency function - using formatCurrencyCompact/Full with currency setting
 
@@ -498,13 +503,13 @@ const BudgetPage: React.FC = () => {
 
       {/* Budget Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        {budgets.filter(budget => budget && budget.BudgetID).map((budget, index) => (
-          <Grid size={{ xs: 12, sm: 6, md: 4, xl: 3 }} key={budget.BudgetID || budget.id || index}>
+        {budgets.filter(budget => budget && (budget.id || budget.BudgetID)).map((budget, index) => (
+          <Grid size={{ xs: 12, sm: 6, md: 4, xl: 3 }} key={budget.id || budget.BudgetID || index}>
             <BudgetCard budget={budget} index={index} />
           </Grid>
         ))}
         
-        {budgets.filter(budget => budget && budget.BudgetID).length === 0 && (
+        {budgets.filter(budget => budget && (budget.id || budget.BudgetID)).length === 0 && (
           <Grid size={{ xs: 12 }}>
             <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 3 }}>
               <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>

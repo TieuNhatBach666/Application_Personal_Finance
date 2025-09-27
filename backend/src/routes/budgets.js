@@ -20,7 +20,36 @@ router.get('/', authenticateToken, asyncHandler(async (req, res) => {
     
     const result = await pool.request()
         .input('userId', req.user.id)
-        .execute('sp_GetUserBudgets');
+        .query(`
+            SELECT 
+                b.BudgetID as id,
+                b.CategoryID as categoryId,
+                b.BudgetName as name,
+                b.BudgetAmount as totalAmount,
+                ISNULL((
+                    SELECT SUM(t.Amount) 
+                    FROM Transactions t 
+                    WHERE t.CategoryID = b.CategoryID 
+                        AND t.UserID = b.UserID
+                        AND t.Type = 'Expense'
+                        AND t.TransactionDate >= b.StartDate 
+                        AND t.TransactionDate <= b.EndDate
+                ), 0) as spentAmount,
+                b.Period as period,
+                b.StartDate as startDate,
+                b.EndDate as endDate,
+                b.AlertThreshold as warningThreshold,
+                c.Color as color,
+                b.IsActive as isActive,
+                c.CategoryName as categoryName,
+                c.Icon as categoryIcon,
+                b.CreatedAt as createdAt,
+                b.UpdatedAt as updatedAt
+            FROM Budgets b
+            INNER JOIN Categories c ON b.CategoryID = c.CategoryID
+            WHERE b.UserID = @userId AND b.IsActive = 1
+            ORDER BY b.CreatedAt DESC
+        `);
     
     res.json({
         success: true,
@@ -42,12 +71,20 @@ router.get('/:id', authenticateToken, asyncHandler(async (req, res) => {
                 b.CategoryID as categoryId,
                 b.BudgetName as name,
                 b.BudgetAmount as totalAmount,
-                b.SpentAmount as spentAmount,
+                ISNULL((
+                    SELECT SUM(t.Amount) 
+                    FROM Transactions t 
+                    WHERE t.CategoryID = b.CategoryID 
+                        AND t.UserID = b.UserID
+                        AND t.Type = 'Expense'
+                        AND t.TransactionDate >= b.StartDate 
+                        AND t.TransactionDate <= b.EndDate
+                ), 0) as spentAmount,
                 b.Period as period,
                 b.StartDate as startDate,
                 b.EndDate as endDate,
-                b.WarningThreshold as warningThreshold,
-                b.Color as color,
+                b.AlertThreshold as warningThreshold,
+                c.Color as color,
                 b.IsActive as isActive,
                 b.CreatedAt as createdAt,
                 b.UpdatedAt as updatedAt,
@@ -142,37 +179,52 @@ router.post('/', authenticateToken, asyncHandler(async (req, res) => {
         .input('period', period)
         .input('startDate', startDate.toISOString().split('T')[0])
         .input('endDate', endDate.toISOString().split('T')[0])
-        .input('warningThreshold', warningThreshold || 80)
-        .input('color', color || '#3498db')
+        .input('alertThreshold', warningThreshold || 80)
         .query(`
             INSERT INTO Budgets (
                 BudgetID, UserID, CategoryID, BudgetName, BudgetAmount, 
-                Period, StartDate, EndDate, WarningThreshold, Color
+                Period, StartDate, EndDate, AlertThreshold
             ) VALUES (
                 @budgetId, @userId, @categoryId, @name, @totalAmount,
-                @period, @startDate, @endDate, @warningThreshold, @color
+                @period, @startDate, @endDate, @alertThreshold
             )
         `);
     
-    // Cập nhật số tiền đã chi cho ngân sách mới
-    if (categoryId) {
-        try {
-            await pool.request()
-                .input('userId', req.user.id)
-                .input('categoryId', categoryId)
-                .execute('sp_UpdateBudgetSpentAmount');
-            console.log('✅ Budget spent amount updated for new budget');
-        } catch (error) {
-            console.log('⚠️ Failed to update budget spent amount:', error.message);
-        }
-    }
-    
     // Lấy ngân sách vừa tạo
     const result = await pool.request()
+        .input('budgetId', budgetId)
         .input('userId', req.user.id)
-        .execute('sp_GetUserBudgets');
+        .query(`
+            SELECT 
+                b.BudgetID as id,
+                b.CategoryID as categoryId,
+                b.BudgetName as name,
+                b.BudgetAmount as totalAmount,
+                ISNULL((
+                    SELECT SUM(t.Amount) 
+                    FROM Transactions t 
+                    WHERE t.CategoryID = b.CategoryID 
+                        AND t.UserID = b.UserID
+                        AND t.Type = 'Expense'
+                        AND t.TransactionDate >= b.StartDate 
+                        AND t.TransactionDate <= b.EndDate
+                ), 0) as spentAmount,
+                b.Period as period,
+                b.StartDate as startDate,
+                b.EndDate as endDate,
+                b.AlertThreshold as warningThreshold,
+                c.Color as color,
+                b.IsActive as isActive,
+                c.CategoryName as categoryName,
+                c.Icon as categoryIcon,
+                b.CreatedAt as createdAt,
+                b.UpdatedAt as updatedAt
+            FROM Budgets b
+            LEFT JOIN Categories c ON b.CategoryID = c.CategoryID
+            WHERE b.BudgetID = @budgetId AND b.UserID = @userId
+        `);
     
-    const createdBudget = result.recordset.find(b => b.BudgetID === budgetId);
+    const createdBudget = result.recordset[0];
     
     res.status(201).json({
         success: true,
@@ -312,15 +364,34 @@ router.get('/summary/current', authenticateToken, asyncHandler(async (req, res) 
     const result = await pool.request()
         .input('userId', req.user.id)
         .query(`
+            WITH BudgetSpent AS (
+                SELECT 
+                    b.BudgetID,
+                    b.BudgetAmount,
+                    b.AlertThreshold,
+                    ISNULL(SUM(t.Amount), 0) as SpentAmount
+                FROM Budgets b
+                LEFT JOIN Transactions t ON b.CategoryID = t.CategoryID 
+                    AND b.UserID = t.UserID
+                    AND t.Type = 'Expense'
+                    AND t.TransactionDate >= b.StartDate 
+                    AND t.TransactionDate <= b.EndDate
+                WHERE b.UserID = @userId AND b.IsActive = 1
+                GROUP BY b.BudgetID, b.BudgetAmount, b.AlertThreshold
+            )
             SELECT
                 COUNT(*) as totalBudgets,
-                SUM(BudgetAmount) as totalBudgetAmount,
-                SUM(SpentAmount) as totalSpentAmount,
-                AVG(CASE WHEN BudgetAmount > 0 THEN CAST(SpentAmount as FLOAT) / CAST(BudgetAmount as FLOAT) * 100 ELSE 0 END) as averageUsagePercentage,
-                COUNT(CASE WHEN SpentAmount >= BudgetAmount * WarningThreshold / 100.0 THEN 1 END) as budgetsNearLimit
-            FROM Budgets
-            WHERE UserID = @userId
-                AND IsActive = 1
+                ISNULL(SUM(BudgetAmount), 0) as totalBudgetAmount,
+                ISNULL(SUM(SpentAmount), 0) as totalSpentAmount,
+                ISNULL(AVG(
+                    CASE WHEN BudgetAmount > 0 THEN 
+                        CAST(SpentAmount as FLOAT) / CAST(BudgetAmount as FLOAT) * 100 
+                    ELSE 0 END
+                ), 0) as averageUsagePercentage,
+                COUNT(CASE WHEN 
+                    SpentAmount >= BudgetAmount * AlertThreshold / 100.0 
+                THEN 1 END) as budgetsNearLimit
+            FROM BudgetSpent
         `);
     
     const summary = result.recordset[0] || {

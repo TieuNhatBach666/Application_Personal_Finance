@@ -1,0 +1,20 @@
+{
+  "name": "personal-finance-database",
+  "version": "1.0.0",
+  "description": "Database scripts for Personal Finance Manager",
+  "scripts": {
+    "test-connection": "node ../backend/src/config/database.js",
+    "export-schema": "echo 'Use SSMS to generate scripts with schema only. See EXPORT-GUIDE.md for instructions.'",
+    "export-sample": "echo 'Use SSMS to generate scripts with sample data. See EXPORT-GUIDE.md for instructions.'",
+    "export-full": "echo 'Use SSMS to generate complete database export. See EXPORT-GUIDE.md for instructions.'",
+    "setup": "sqlcmd -S \"TIEUNHATBACH\\TIEUNHATBACH\" -U sa -P 123456 -i complete-setup.sql",
+    "setup-sample": "sqlcmd -S \"TIEUNHATBACH\\TIEUNHATBACH\" -U sa -P 123456 -i generate-sample-export.sql"
+  },
+  "keywords": [
+    "sql-server",
+    "database",
+    "personal-finance"
+  ],
+  "author": "Personal Finance Manager",
+  "license": "MIT"
+}

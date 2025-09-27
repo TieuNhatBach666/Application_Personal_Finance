@@ -11,12 +11,41 @@ router.get('/', authenticateToken, asyncHandler(async (req, res) => {
     const { type, isRead, limit = 50 } = req.query;
     const pool = getPool();
     
+    let query = `
+        SELECT TOP (@limit)
+            NotificationID,
+            Title,
+            Message,
+            Type,
+            Priority,
+            IsRead,
+            IsArchived,
+            ActionUrl,
+            ExpiresAt,
+            CreatedAt,
+            ReadAt
+        FROM Notifications
+        WHERE UserID = @userId
+            AND IsArchived = 0
+            AND (ExpiresAt IS NULL OR ExpiresAt > GETUTCDATE())
+    `;
+    
+    if (type) {
+        query += ` AND Type = @type`;
+    }
+    
+    if (isRead !== undefined) {
+        query += ` AND IsRead = @isRead`;
+    }
+    
+    query += ` ORDER BY CreatedAt DESC`;
+    
     const result = await pool.request()
         .input('userId', req.user.id)
         .input('type', type || null)
         .input('isRead', isRead !== undefined ? (isRead === 'true' ? 1 : 0) : null)
         .input('limit', parseInt(limit))
-        .execute('sp_GetUserNotifications');
+        .query(query);
     
     const notifications = result.recordset.map(notification => ({
         id: notification.NotificationID,
@@ -25,8 +54,8 @@ router.get('/', authenticateToken, asyncHandler(async (req, res) => {
         message: notification.Message,
         priority: notification.Priority,
         isRead: notification.IsRead,
-        actionable: notification.IsActionable,
-        data: notification.ActionData ? JSON.parse(notification.ActionData) : null,
+        actionable: !!notification.ActionUrl,
+        data: notification.ActionUrl ? { url: notification.ActionUrl } : null,
         timestamp: notification.CreatedAt,
         readAt: notification.ReadAt
     }));

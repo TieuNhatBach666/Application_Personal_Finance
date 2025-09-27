@@ -16,6 +16,7 @@ const statisticsRoutes = require('./routes/statistics');
 const budgetRoutes = require('./routes/budgets');
 const notificationRoutes = require('./routes/notifications');
 const settingsRoutes = require('./routes/settings');
+const exportRoutes = require('./routes/export');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -90,6 +91,7 @@ app.use('/api/statistics', statisticsRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/export', exportRoutes);
 
 // Xử lý 404
 app.use(notFoundHandler);

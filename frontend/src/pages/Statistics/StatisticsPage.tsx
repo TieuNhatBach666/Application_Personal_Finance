@@ -23,7 +23,6 @@ import {
 import {
     PieChart as PieChartIcon,
     BarChart as BarChartIcon,
-    ShowChart,
     TrendingUp,
     TrendingDown,
     AccountBalance,
@@ -40,7 +39,6 @@ import { fetchTransactionSummary } from '../../store/slices/transactionSlice';
 import { fetchNotifications } from '../../store/slices/notificationSlice';
 import PieChart from '../../components/Charts/PieChart';
 import BarChart from '../../components/Charts/BarChart';
-import LineChart from '../../components/Charts/LineChart';
 import { fetchCategories } from '../../store/slices/categorySlice';
 import { useUserSettings } from '../../hooks/useUserSettings';
 import NotificationWarning from '../../components/NotificationWarning';
@@ -49,7 +47,7 @@ import { exportReport, ReportData } from '../../utils/exportService';
 const StatisticsPage: React.FC = () => {
     const dispatch = useAppDispatch();
     const { summary } = useAppSelector((state) => state.transactions);
-    const { language, currency, formatFull, getText } = useUserSettings();
+    const { language, currency, formatFull, formatCompact, getText } = useUserSettings();
 
     const [isVisible, setIsVisible] = useState(false);
     const [activeChart, setActiveChart] = useState('pie');
@@ -272,7 +270,11 @@ const StatisticsPage: React.FC = () => {
                             fontSize: '1.8rem',
                         }}
                     >
-                        {formatFull(value)}
+                        {title === getText('totalTransactions') || title === 'Số giao dịch' ? (
+                            `${value} ${getText('transactions')}`
+                        ) : (
+                            formatCompact(value)
+                        )}
                     </Typography>
                 </CardContent>
             </Card>
@@ -456,7 +458,6 @@ const StatisticsPage: React.FC = () => {
                                     {[
                                         { key: 'pie', icon: <PieChartIcon />, label: getText('pieChart') },
                                         { key: 'bar', icon: <BarChartIcon />, label: getText('barChart') },
-                                        { key: 'line', icon: <ShowChart />, label: getText('lineChart') },
                                     ].map((chart) => (
                                         <Button
                                             key={chart.key}
@@ -502,14 +503,10 @@ const StatisticsPage: React.FC = () => {
                                         {activeChart === 'bar' && (
                                             <BarChart data={categoryBreakdown} title={`${getText('expensesByCategory')} - ${getTimePeriodLabel()}`} />
                                         )}
-                                        {activeChart === 'line' && (
-                                            <LineChart data={categoryBreakdown} title={`${getText('expensesByCategory')} - ${getTimePeriodLabel()}`} />
-                                        )}
                                     </>
                                 ) : (
                                     <Box
                                         sx={{
-                                            height: '100%',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
@@ -518,7 +515,7 @@ const StatisticsPage: React.FC = () => {
                                             color: 'text.secondary',
                                         }}
                                     >
-                                        <ShowChart sx={{ fontSize: 64, opacity: 0.3 }} />
+                                        <BarChartIcon sx={{ fontSize: 64, opacity: 0.3 }} />
                                         <Typography variant="h6" color="text.secondary">
                                             {getText('noStatsData')}
                                         </Typography>

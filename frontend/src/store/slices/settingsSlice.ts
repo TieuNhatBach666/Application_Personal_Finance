@@ -246,12 +246,43 @@ export const fetchBackupHistory = createAsyncThunk(
       });
 
       if (!response.ok) {
+        // Nếu là lỗi 400, có thể bảng chưa tồn tại, trả về mảng rỗng
+        if (response.status === 400) {
+          console.log('⚠️ Bảng BackupHistory chưa tồn tại, trả về mảng rỗng');
+          return [];
+        }
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to fetch backup history');
       }
 
       const data = await response.json();
-      return data.data;
+      return data.data || [];
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const setupBackupTable = createAsyncThunk(
+  'settings/setupBackupTable',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/settings/backup/setup', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to setup backup table');
+      }
+
+      const data = await response.json();
+      return data.message;
     } catch (error: any) {
       return rejectWithValue(error.message);
     }
@@ -390,6 +421,19 @@ const settingsSlice = createSlice({
         state.backupHistory = action.payload;
       })
       .addCase(fetchBackupHistory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // Setup backup table
+      .addCase(setupBackupTable.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(setupBackupTable.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(setupBackupTable.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

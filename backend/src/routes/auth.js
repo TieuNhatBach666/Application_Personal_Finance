@@ -323,6 +323,73 @@ router.put('/profile', authenticateToken, asyncHandler(async (req, res) => {
     });
 }));
 
+// Đổi mật khẩu
+router.post('/change-password', authenticateToken, asyncHandler(async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({
+            success: false,
+            message: 'Vui lòng nhập đầy đủ thông tin'
+        });
+    }
+    
+    if (newPassword.length < 6) {
+        return res.status(400).json({
+            success: false,
+            message: 'Mật khẩu mới phải có ít nhất 6 ký tự'
+        });
+    }
+    
+    const pool = getPool();
+    
+    // Lấy thông tin user hiện tại
+    const userResult = await pool.request()
+        .input('userId', req.user.id)
+        .query(`
+            SELECT ${SCHEMA_INFO.COLUMNS.USERS.PASSWORD_HASH}
+            FROM ${SCHEMA_INFO.TABLES.USERS} 
+            WHERE ${SCHEMA_INFO.COLUMNS.USERS.ID} = @userId
+        `);
+    
+    if (userResult.recordset.length === 0) {
+        return res.status(404).json({
+            success: false,
+            message: 'Người dùng không tồn tại'
+        });
+    }
+    
+    const user = userResult.recordset[0];
+    
+    // Kiểm tra mật khẩu hiện tại
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user[SCHEMA_INFO.COLUMNS.USERS.PASSWORD_HASH]);
+    if (!isCurrentPasswordValid) {
+        return res.status(400).json({
+            success: false,
+            message: 'Mật khẩu hiện tại không đúng'
+        });
+    }
+    
+    // Hash mật khẩu mới
+    const hashedNewPassword = await bcrypt.hash(newPassword, 12);
+    
+    // Cập nhật mật khẩu
+    await pool.request()
+        .input('userId', req.user.id)
+        .input('passwordHash', hashedNewPassword)
+        .query(`
+            UPDATE ${SCHEMA_INFO.TABLES.USERS} 
+            SET ${SCHEMA_INFO.COLUMNS.USERS.PASSWORD_HASH} = @passwordHash,
+                ${SCHEMA_INFO.COLUMNS.USERS.UPDATED_AT} = GETDATE()
+            WHERE ${SCHEMA_INFO.COLUMNS.USERS.ID} = @userId
+        `);
+    
+    res.json({
+        success: true,
+        message: 'Đổi mật khẩu thành công'
+    });
+}));
+
 // Đăng xuất (xóa token ở phía client)
 router.post('/logout', authenticateToken, (req, res) => {
     res.json({

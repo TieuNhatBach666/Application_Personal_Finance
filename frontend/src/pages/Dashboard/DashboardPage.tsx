@@ -361,8 +361,12 @@ const DashboardPage: React.FC = () => {
               sx={{
                 p: 3,
                 borderRadius: 3,
-                background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-                border: '1px solid #e9ecef',
+                background: (theme) => theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, #2d3748 0%, #1a202c 100%)'
+                  : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                border: (theme) => theme.palette.mode === 'dark'
+                  ? '1px solid #4a5568'
+                  : '1px solid #e9ecef',
                 boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
                 minHeight: 400,
               }}
@@ -372,7 +376,7 @@ const DashboardPage: React.FC = () => {
                   variant="h5"
                   sx={{
                     fontWeight: 700,
-                    color: 'text.primary',
+                    color: (theme) => theme.palette.mode === 'dark' ? '#e2e8f0' : '#2c3e50',
                   }}
                 >
                   📊 Thống kê tài chính

@@ -19,20 +19,34 @@ npm install
 npm run test-connection
 ```
 
-### 3. Create Database Schema
-Execute the SQL scripts in SQL Server Management Studio or using sqlcmd:
+### 3. Kiểm tra và tạo Database
 
+**Bước 1: Kiểm tra trạng thái database hiện tại**
+1. Mở SQL Server Management Studio (SSMS)
+2. Kết nối đến server: `TIEUNHATBACH666\TIEUNHATBACH` với tài khoản sa/123456
+3. Mở và chạy file `check-database-status.sql` để kiểm tra database có tồn tại và có đầy đủ bảng không
+
+**Bước 2: Tạo database hoàn chỉnh với tất cả fixes**
+1. Trong SSMS, mở file `complete-database-export.sql`
+2. Chạy (Execute) script này để tạo database hoàn chỉnh
+3. Script sẽ tự động:
+   - Xóa database cũ (nếu có) và tạo mới
+   - Tạo tất cả 9 bảng cần thiết
+   - Tạo indexes để tối ưu hiệu suất
+   - Tạo stored procedures, functions và views
+   - Chèn dữ liệu mẫu hoàn chỉnh
+   - Tạo user test với email: `nguoidung@vidu.com`, mật khẩu: `123456`
+
+**Bước 3: Khởi động lại backend**
+Sau khi chạy script database, khởi động lại backend:
 ```bash
-# Using sqlcmd (if available)
-sqlcmd -S "TIEUNHATBACH\TIEUNHATBACH" -U sa -P 123456 -i create-database.sql
-sqlcmd -S "TIEUNHATBACH\TIEUNHATBACH" -U sa -P 123456 -i seed-data.sql
+cd backend
+npm start
 ```
 
-Or manually run the scripts in SQL Server Management Studio:
-1. Open SQL Server Management Studio
-2. Connect to `TIEUNHATBACH\TIEUNHATBACH` with sa/123456
-3. Open and execute `create-database.sql`
-4. Open and execute `seed-data.sql`
+> ✅ **Khuyến nghị**: Sử dụng file `complete-database-export.sql` thay vì `create-database.sql` để có database hoàn chỉnh với tất cả tính năng và không gặp lỗi.
+
+> ⚠️ **Quan trọng**: Nếu gặp lỗi "Invalid object name 'Users'", có nghĩa là bảng chưa được tạo. Hãy chạy lại script `complete-database-export.sql` trong SSMS.
 
 ## Database Schema
 
@@ -40,7 +54,7 @@ Or manually run the scripts in SQL Server Management Studio:
 1. **Users** - User accounts and authentication
 2. **Categories** - Income and expense categories
 3. **Transactions** - All financial transactions
-4. **Budgets** - Monthly budget allocations
+4. **Budgets** - Budget allocations with various periods
 5. **UserSettings** - User preferences and settings
 6. **Notifications** - System notifications and alerts
 
@@ -116,3 +130,23 @@ After successful database setup:
 2. Verify all tables are created
 3. Check that default categories are inserted
 4. Proceed to backend API development (Task 1.3)
+
+## Xuất dữ liệu để chia sẻ trên GitHub
+
+Nếu bạn cần xuất schema và dữ liệu database để chia sẻ trên GitHub, vui lòng tham khảo [Hướng dẫn Xuất dữ liệu](EXPORT-GUIDE.md) của chúng tôi cung cấp hướng dẫn chi tiết về:
+- Xuất schema database không có dữ liệu
+- Xuất database cùng với dữ liệu
+- Xuất các bảng cụ thể
+- Thực hành tốt khi chia sẻ trên GitHub
+
+### Các lệnh xuất nhanh:
+```bash
+# Xuất chỉ schema
+npm run export-schema
+
+# Xuất với dữ liệu mẫu
+npm run export-sample
+
+# Xuất database hoàn chỉnh (sử dụng cẩn thận)
+npm run export-full
+```

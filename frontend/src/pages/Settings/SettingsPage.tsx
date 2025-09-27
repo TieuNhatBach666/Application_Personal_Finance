@@ -60,19 +60,20 @@ import {
   Info,
   Help,
   Policy,
-  Backup,
   Restore,
   Download,
   Upload,
+  Backup,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { 
-  fetchSettings, 
-  updateSetting, 
-  updateMultipleSettings, 
-  createBackup, 
+import {
+  fetchSettings,
+  updateSettings,
+  resetSettings,
+  createBackup,
   fetchBackupHistory,
-  resetSettings as resetSettingsAction,
+  setupBackupTable,
+  clearError,
   updateLocalSetting
 } from '../../store/slices/settingsSlice';
 import { updateUser, getCurrentUser } from '../../store/slices/authSlice';
@@ -112,6 +113,12 @@ const SettingsPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [openBackupDialog, setOpenBackupDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [openPasswordDialog, setOpenPasswordDialog] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
 
   const [profileData, setProfileData] = useState({
     firstName: user?.firstName || '',
@@ -150,17 +157,26 @@ const SettingsPage: React.FC = () => {
 
   useEffect(() => {
     setIsVisible(true);
-    // Only load backup history, don't fetch settings to avoid reset
-    dispatch(fetchBackupHistory());
+    
+    // Setup backup table first, then load backup history
+    const initializeBackup = async () => {
+      try {
+        await dispatch(setupBackupTable()).unwrap();
+        dispatch(fetchBackupHistory());
+      } catch (error) {
+        console.log('⚠️ Không thể setup bảng backup, tiếp tục với backup history:', error);
+        dispatch(fetchBackupHistory());
+      }
+    };
+    
+    initializeBackup();
 
     // Force reload user data if not available
-    if (!user || !user.firstName) {
-      console.log('👤 User data missing, fetching...');
+    if (!user?.UserID) {
       dispatch(getCurrentUser());
     }
-  }, [dispatch, user]);
+  }, [dispatch, user?.UserID]);
 
-  // Update profile data when user data changes
   useEffect(() => {
     if (user) {
       setProfileData(prev => ({
@@ -262,10 +278,77 @@ const SettingsPage: React.FC = () => {
     input.click();
   };
 
-  const handleExportData = () => {
-    // TODO: Implement data export to Excel/PDF
-    console.log('Exporting data...');
-    alert('Tính năng xuất dữ liệu sẽ được triển khai trong phiên bản tiếp theo');
+  const handleExportData = async (format: 'excel' | 'pdf') => {
+    try {
+      const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/export/${format}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to export ${format}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `personal-finance-data.${format === 'excel' ? 'xlsx' : 'pdf'}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error(`Failed to export ${format}:`, error);
+      alert(`Không thể xuất dữ liệu ${format.toUpperCase()}. Vui lòng thử lại sau.`);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      alert('Mật khẩu mới và xác nhận mật khẩu không khớp!');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      alert('Mật khẩu mới phải có ít nhất 6 ký tự!');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/auth/change-password', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to change password');
+      }
+
+      alert('Đổi mật khẩu thành công!');
+      setOpenPasswordDialog(false);
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+    } catch (error: any) {
+      console.error('Failed to change password:', error);
+      alert(error.message || 'Không thể đổi mật khẩu. Vui lòng thử lại sau.');
+    }
   };
 
   const handleDeleteAccount = () => {
@@ -694,7 +777,12 @@ const SettingsPage: React.FC = () => {
                         secondary="Cập nhật mật khẩu định kỳ"
                       />
                       <ListItemSecondaryAction>
-                        <Button variant="outlined" size="small" sx={{ textTransform: 'none' }}>
+                        <Button 
+                          variant="outlined" 
+                          size="small" 
+                          sx={{ textTransform: 'none' }}
+                          onClick={() => setOpenPasswordDialog(true)}
+                        >
                           Đổi mật khẩu
                         </Button>
                       </ListItemSecondaryAction>
@@ -815,7 +903,7 @@ const SettingsPage: React.FC = () => {
                           <Button
                             variant="outlined"
                             startIcon={<Download />}
-                            onClick={handleExportData}
+                            onClick={() => handleExportData('excel')}
                             sx={{ textTransform: 'none' }}
                           >
                             Xuất Excel
@@ -823,7 +911,7 @@ const SettingsPage: React.FC = () => {
                           <Button
                             variant="outlined"
                             startIcon={<Download />}
-                            onClick={handleExportData}
+                            onClick={() => handleExportData('pdf')}
                             sx={{ textTransform: 'none' }}
                           >
                             Xuất PDF
@@ -868,6 +956,54 @@ const SettingsPage: React.FC = () => {
           </Button>
           <Button onClick={handleBackup} variant="contained" sx={{ textTransform: 'none' }}>
             Tạo Sao Lưu
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Change Password Dialog */}
+      <Dialog open={openPasswordDialog} onClose={() => setOpenPasswordDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Đổi Mật Khẩu</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              type="password"
+              label="Mật khẩu hiện tại"
+              value={passwordData.currentPassword}
+              onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              type="password"
+              label="Mật khẩu mới"
+              value={passwordData.newPassword}
+              onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+              sx={{ mb: 2 }}
+              helperText="Mật khẩu phải có ít nhất 6 ký tự"
+            />
+            <TextField
+              fullWidth
+              type="password"
+              label="Xác nhận mật khẩu mới"
+              value={passwordData.confirmPassword}
+              onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+              error={passwordData.confirmPassword !== '' && passwordData.newPassword !== passwordData.confirmPassword}
+              helperText={passwordData.confirmPassword !== '' && passwordData.newPassword !== passwordData.confirmPassword ? 'Mật khẩu không khớp' : ''}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenPasswordDialog(false)} sx={{ textTransform: 'none' }}>
+            Hủy
+          </Button>
+          <Button 
+            onClick={handleChangePassword} 
+            variant="contained" 
+            sx={{ textTransform: 'none' }}
+            disabled={!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+          >
+            Đổi Mật Khẩu
           </Button>
         </DialogActions>
       </Dialog>
