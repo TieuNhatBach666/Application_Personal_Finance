@@ -21,7 +21,6 @@ import {
   Savings,
   PieChart as PieChartIcon,
   BarChart as BarChartIcon,
-  ShowChart,
   Notifications,
   Star,
   ArrowUpward,
@@ -41,7 +40,6 @@ import { PieChart as RechartsePieChart, Pie, Cell, ResponsiveContainer, BarChart
 import { useUserSettings } from '../../hooks/useUserSettings';
 import PieChart from '../../components/Charts/PieChart';
 import BarChart from '../../components/Charts/BarChart';
-import LineChart from '../../components/Charts/LineChart';
 import NotificationWarning from '../../components/NotificationWarning';
 
 const DashboardPage: React.FC = () => {
@@ -84,13 +82,22 @@ const DashboardPage: React.FC = () => {
 
       // Fetch current month's transaction summary
       const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      
+      // Use current date if we're in the middle of the month, or end of month date
+      const endDate = now.getDate() < endOfMonth.getDate() ? now : endOfMonth;
+      
+      const startDateStr = startOfMonth.toISOString().split('T')[0];
+      const endDateStr = endDate.toISOString().split('T')[0];
 
-      console.log('📅 Dashboard: Fetching summary for', startOfMonth, 'to', endOfMonth);
+      console.log('📅 Dashboard: Fetching summary for', startDateStr, 'to', endDateStr, '(today:', now.toISOString().split('T')[0], ')');
 
       // Fetch summary data (same as Statistics - no await)
-      dispatch(fetchTransactionSummary({ startDate: startOfMonth, endDate: endOfMonth }));
+      dispatch(fetchTransactionSummary({ startDate: startDateStr, endDate: endDateStr }));
+      
+      // Fetch recent transactions for activity feed
+      dispatch(fetchTransactions({ page: 1, limit: 10 }));
       
       // Fetch category breakdown for chart
       setChartLoading(true);
@@ -100,7 +107,7 @@ const DashboardPage: React.FC = () => {
           console.log('📊 Dashboard: Fetching category data...');
           
           const response = await fetch(
-            `http://localhost:5000/api/statistics/by-category?startDate=${startOfMonth}&endDate=${endOfMonth}&type=Expense`,
+            `http://localhost:5000/api/statistics/by-category?startDate=${startDateStr}&endDate=${endDateStr}&type=Expense`,
             {
               headers: {
                 'Authorization': `Bearer ${token}`,
@@ -133,19 +140,8 @@ const DashboardPage: React.FC = () => {
     fetchDashboardData();
   }, [dispatch]);
 
-  // Add effect to handle summary changes
-  useEffect(() => {
-    // Set dataLoaded when summary is available (even if all values are 0)
-    if (summary && (summary.totalIncome !== undefined && summary.totalExpense !== undefined)) {
-      setDataLoaded(true);
-      console.log('📊 Dashboard Summary Updated:', {
-        totalIncome: summary.totalIncome,
-        totalExpense: summary.totalExpense,
-        netSavings: summary.netSavings,
-        transactionCount: summary.transactionCount
-      });
-    }
-  }, [summary]);
+  // Remove this useEffect - it causes infinite loop
+  // dataLoaded is already set in fetchDashboardData
 
   // Use categoryData directly (fallback already handled in fetch logic like Statistics page)
   const categoryBreakdown = categoryData;
@@ -385,7 +381,6 @@ const DashboardPage: React.FC = () => {
                   {[
                     { key: 'pie', icon: <PieChartIcon />, label: 'Tròn' },
                     { key: 'bar', icon: <BarChartIcon />, label: 'Cột' },
-                    { key: 'line', icon: <ShowChart />, label: 'Đường' },
                   ].map((chart) => (
                     <Button
                       key={chart.key}
@@ -430,9 +425,6 @@ const DashboardPage: React.FC = () => {
                     )}
                     {activeChart === 'bar' && (
                       <BarChart data={categoryBreakdown} title="Chi tiêu theo danh mục - Tháng này" />
-                    )}
-                    {activeChart === 'line' && (
-                      <LineChart data={categoryBreakdown} title="Chi tiêu theo danh mục - Tháng này" />
                     )}
                   </>
                 ) : (
@@ -653,19 +645,93 @@ const DashboardPage: React.FC = () => {
                   🕒 {getText('recentActivity')}
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                  <Box sx={{ textAlign: 'center', py: 2 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      {getText('recentActivityDesc')}
-                    </Typography>
-                    <Button
-                      variant="text"
-                      size="small"
-                      onClick={() => navigate('/transactions')}
-                      sx={{ mt: 1, textTransform: 'none' }}
-                    >
-                      {getText('viewAllTransactions')}
-                    </Button>
-                  </Box>
+                  {recentTransactions && recentTransactions.length > 0 ? (
+                    <>
+                      {recentTransactions.slice(0, 5).map((transaction, index) => (
+                        <Box
+                          key={transaction.id || index}
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            p: 2,
+                            borderRadius: 2,
+                            backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                            border: '1px solid rgba(155, 89, 182, 0.1)',
+                            '&:hover': {
+                              backgroundColor: 'rgba(155, 89, 182, 0.05)',
+                            },
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Avatar
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                backgroundColor: transaction.type === 'Income' ? 'success.light' : 'error.light',
+                                color: transaction.type === 'Income' ? 'success.dark' : 'error.dark',
+                              }}
+                            >
+                              {transaction.type === 'Income' ? <TrendingUp fontSize="small" /> : <TrendingDown fontSize="small" />}
+                            </Avatar>
+                            <Box>
+                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                {transaction.description || 'Giao dịch'}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {transaction.category?.name || 'Khác'} • {new Date(transaction.transactionDate).toLocaleDateString('vi-VN')}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Box sx={{ textAlign: 'right' }}>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontWeight: 600,
+                                color: transaction.type === 'Income' ? 'success.main' : 'error.main',
+                              }}
+                            >
+                              {transaction.type === 'Income' ? '+' : '-'}{formatCompact(transaction.amount)}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      ))}
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        onClick={() => navigate('/transactions')}
+                        sx={{
+                          mt: 1,
+                          borderRadius: 2,
+                          textTransform: 'none',
+                          fontWeight: 600,
+                          borderColor: 'primary.main',
+                          color: 'primary.main',
+                          '&:hover': {
+                            borderColor: 'primary.dark',
+                            backgroundColor: 'primary.light',
+                          },
+                        }}
+                      >
+                        {getText('viewAllTransactions')}
+                      </Button>
+                    </>
+                  ) : (
+                    <Box sx={{ textAlign: 'center', py: 2 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Chưa có giao dịch nào gần đây
+                      </Typography>
+                      <Button
+                        variant="text"
+                        size="small"
+                        onClick={() => navigate('/transactions/add')}
+                        sx={{ mt: 1, textTransform: 'none' }}
+                      >
+                        Tạo giao dịch đầu tiên
+                      </Button>
+                    </Box>
+                  )}
                 </Box>
               </Paper>
             </Slide>

@@ -38,7 +38,7 @@ router.get('/', authenticateToken, asyncHandler(async (req, res) => {
                 b.Period as period,
                 b.StartDate as startDate,
                 b.EndDate as endDate,
-                b.AlertThreshold as warningThreshold,
+                b.WarningThreshold as warningThreshold,
                 c.Color as color,
                 b.IsActive as isActive,
                 c.CategoryName as categoryName,
@@ -83,7 +83,7 @@ router.get('/:id', authenticateToken, asyncHandler(async (req, res) => {
                 b.Period as period,
                 b.StartDate as startDate,
                 b.EndDate as endDate,
-                b.AlertThreshold as warningThreshold,
+                b.WarningThreshold as warningThreshold,
                 c.Color as color,
                 b.IsActive as isActive,
                 b.CreatedAt as createdAt,
@@ -157,12 +157,15 @@ router.post('/', authenticateToken, asyncHandler(async (req, res) => {
             break;
         case 'monthly':
             startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            // Get last day of current month correctly
+            const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            endDate = new Date(now.getFullYear(), now.getMonth(), lastDayOfMonth);
             break;
         case 'quarterly':
             const quarter = Math.floor(now.getMonth() / 3);
             startDate = new Date(now.getFullYear(), quarter * 3, 1);
-            endDate = new Date(now.getFullYear(), quarter * 3 + 3, 0);
+            const lastDayOfQuarter = new Date(now.getFullYear(), quarter * 3 + 3, 0).getDate();
+            endDate = new Date(now.getFullYear(), quarter * 3 + 2, lastDayOfQuarter);
             break;
         case 'yearly':
             startDate = new Date(now.getFullYear(), 0, 1);
@@ -179,14 +182,14 @@ router.post('/', authenticateToken, asyncHandler(async (req, res) => {
         .input('period', period)
         .input('startDate', startDate.toISOString().split('T')[0])
         .input('endDate', endDate.toISOString().split('T')[0])
-        .input('alertThreshold', warningThreshold || 80)
+        .input('warningThreshold', warningThreshold || 80)
         .query(`
             INSERT INTO Budgets (
                 BudgetID, UserID, CategoryID, BudgetName, BudgetAmount, 
-                Period, StartDate, EndDate, AlertThreshold
+                Period, StartDate, EndDate, WarningThreshold
             ) VALUES (
                 @budgetId, @userId, @categoryId, @name, @totalAmount,
-                @period, @startDate, @endDate, @alertThreshold
+                @period, @startDate, @endDate, @warningThreshold
             )
         `);
     
@@ -212,7 +215,7 @@ router.post('/', authenticateToken, asyncHandler(async (req, res) => {
                 b.Period as period,
                 b.StartDate as startDate,
                 b.EndDate as endDate,
-                b.AlertThreshold as warningThreshold,
+                b.WarningThreshold as warningThreshold,
                 c.Color as color,
                 b.IsActive as isActive,
                 c.CategoryName as categoryName,
@@ -263,7 +266,6 @@ router.put('/:id', authenticateToken, asyncHandler(async (req, res) => {
         .input('totalAmount', totalAmount)
         .input('period', period)
         .input('warningThreshold', warningThreshold || 80)
-        .input('color', color || '#3498db')
         .query(`
             UPDATE Budgets SET
                 BudgetName = @name,
@@ -271,17 +273,45 @@ router.put('/:id', authenticateToken, asyncHandler(async (req, res) => {
                 BudgetAmount = @totalAmount,
                 Period = @period,
                 WarningThreshold = @warningThreshold,
-                Color = @color,
                 UpdatedAt = GETUTCDATE()
             WHERE BudgetID = @budgetId
         `);
     
     // Lấy ngân sách đã cập nhật
     const result = await pool.request()
+        .input('budgetId', id)
         .input('userId', req.user.id)
-        .execute('sp_GetUserBudgets');
+        .query(`
+            SELECT 
+                b.BudgetID as id,
+                b.CategoryID as categoryId,
+                b.BudgetName as name,
+                b.BudgetAmount as totalAmount,
+                ISNULL((
+                    SELECT SUM(t.Amount) 
+                    FROM Transactions t 
+                    WHERE t.CategoryID = b.CategoryID 
+                        AND t.UserID = b.UserID
+                        AND t.Type = 'Expense'
+                        AND t.TransactionDate >= b.StartDate 
+                        AND t.TransactionDate <= b.EndDate
+                ), 0) as spentAmount,
+                b.Period as period,
+                b.StartDate as startDate,
+                b.EndDate as endDate,
+                b.WarningThreshold as warningThreshold,
+                c.Color as color,
+                b.IsActive as isActive,
+                c.CategoryName as categoryName,
+                c.Icon as categoryIcon,
+                b.CreatedAt as createdAt,
+                b.UpdatedAt as updatedAt
+            FROM Budgets b
+            LEFT JOIN Categories c ON b.CategoryID = c.CategoryID
+            WHERE b.BudgetID = @budgetId AND b.UserID = @userId
+        `);
     
-    const updatedBudget = result.recordset.find(b => b.BudgetID === id);
+    const updatedBudget = result.recordset[0];
     
     res.json({
         success: true,
@@ -368,7 +398,7 @@ router.get('/summary/current', authenticateToken, asyncHandler(async (req, res) 
                 SELECT 
                     b.BudgetID,
                     b.BudgetAmount,
-                    b.AlertThreshold,
+                    b.WarningThreshold,
                     ISNULL(SUM(t.Amount), 0) as SpentAmount
                 FROM Budgets b
                 LEFT JOIN Transactions t ON b.CategoryID = t.CategoryID 
@@ -377,7 +407,7 @@ router.get('/summary/current', authenticateToken, asyncHandler(async (req, res) 
                     AND t.TransactionDate >= b.StartDate 
                     AND t.TransactionDate <= b.EndDate
                 WHERE b.UserID = @userId AND b.IsActive = 1
-                GROUP BY b.BudgetID, b.BudgetAmount, b.AlertThreshold
+                GROUP BY b.BudgetID, b.BudgetAmount, b.WarningThreshold
             )
             SELECT
                 COUNT(*) as totalBudgets,
@@ -389,7 +419,7 @@ router.get('/summary/current', authenticateToken, asyncHandler(async (req, res) 
                     ELSE 0 END
                 ), 0) as averageUsagePercentage,
                 COUNT(CASE WHEN 
-                    SpentAmount >= BudgetAmount * AlertThreshold / 100.0 
+                    SpentAmount >= BudgetAmount * WarningThreshold / 100.0 
                 THEN 1 END) as budgetsNearLimit
             FROM BudgetSpent
         `);

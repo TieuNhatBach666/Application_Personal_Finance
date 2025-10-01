@@ -90,8 +90,14 @@ const BudgetPage: React.FC = () => {
 
   // Debug: Log budgets data
   useEffect(() => {
-    console.log('🔍 Budgets Debug:', { budgets, loading, error });
-  }, [budgets, loading, error]);
+    console.log('🔍 Budgets Debug:', { 
+      budgets, 
+      budgetsLength: budgets?.length,
+      loading, 
+      error,
+      budgetSummary 
+    });
+  }, [budgets, loading, error, budgetSummary]);
 
   // Remove old formatCurrency function - using formatCurrencyCompact/Full with currency setting
 
@@ -176,35 +182,19 @@ const BudgetPage: React.FC = () => {
     }
   };
 
-  const BudgetCard = ({ budget, index }: { budget: Budget; index: number }) => {
+  const BudgetCard = React.memo(({ budget, index }: { budget: Budget; index: number }) => {
+    console.log('🔍 BudgetCard Debug:', budget);
     const spentAmount = budget.SpentAmount || budget.spentAmount || 0;
     const totalAmount = budget.BudgetAmount || budget.totalAmount || 1;
     const warningThreshold = budget.WarningThreshold || budget.warningThreshold || 80;
     const budgetName = budget.BudgetName || budget.name || 'Ngân sách';
     const budgetColor = budget.Color || budget.color || '#3498db';
     
-    // Debug logs
-    console.log('🔍 Budget Debug:', {
-      budgetName,
-      spentAmount,
-      totalAmount,
-      SpentAmount: budget.SpentAmount,
-      BudgetAmount: budget.BudgetAmount,
-      rawBudget: budget
-    });
-    
     // Tính percentage an toàn
     let percentage = 0;
     if (totalAmount > 0 && spentAmount >= 0) {
       percentage = (spentAmount / totalAmount) * 100;
     }
-    
-    console.log('📊 Percentage calculation:', { 
-      spentAmount, 
-      totalAmount, 
-      percentage,
-      isValidCalculation: totalAmount > 0 && spentAmount >= 0
-    });
     const progressColor = getProgressColor(percentage, warningThreshold);
     const status = getProgressStatus(percentage, warningThreshold);
     const remaining = totalAmount - spentAmount;
@@ -259,7 +249,7 @@ const BudgetPage: React.FC = () => {
                 </IconButton>
                 <IconButton
                   size="small"
-                  onClick={() => handleDelete(budget.BudgetID || budget.id)}
+                  onClick={() => handleDelete(budget.id)}
                   sx={{ color: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.1)' }}
                 >
                   <Delete fontSize="small" />
@@ -331,7 +321,7 @@ const BudgetPage: React.FC = () => {
         </Card>
       </Grow>
     );
-  };
+  });
 
   const totalBudget = budgetSummary?.totalBudgetAmount || 0;
   const totalSpent = budgetSummary?.totalSpentAmount || 0;
@@ -503,13 +493,13 @@ const BudgetPage: React.FC = () => {
 
       {/* Budget Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        {budgets.filter(budget => budget && (budget.id || budget.BudgetID)).map((budget, index) => (
-          <Grid size={{ xs: 12, sm: 6, md: 4, xl: 3 }} key={budget.id || budget.BudgetID || index}>
+        {budgets.filter(budget => budget && budget.id).map((budget, index) => (
+          <Grid size={{ xs: 12, sm: 6, md: 4, xl: 3 }} key={budget.id || index}>
             <BudgetCard budget={budget} index={index} />
           </Grid>
         ))}
         
-        {budgets.filter(budget => budget && (budget.id || budget.BudgetID)).length === 0 && (
+        {budgets.filter(budget => budget && budget.id).length === 0 && (
           <Grid size={{ xs: 12 }}>
             <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 3 }}>
               <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>

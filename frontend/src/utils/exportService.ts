@@ -3,6 +3,8 @@
  * Tác giả: Tiểu Nhất Bạch
  */
 
+import * as XLSX from 'xlsx';
+
 export interface ReportData {
   title: string;
   period: string;
@@ -71,6 +73,70 @@ export const exportToCSV = (data: ReportData, filename: string) => {
   } catch (error) {
     console.error('❌ Failed to export CSV:', error);
     throw new Error('Không thể xuất báo cáo CSV');
+  }
+};
+
+/**
+ * Xuất báo cáo dưới định dạng Excel XLSX
+ */
+export const exportToExcel = (data: ReportData, filename: string) => {
+  try {
+    // Tạo workbook mới
+    const wb = XLSX.utils.book_new();
+    
+    // Sheet 1: Tổng quan
+    const summaryData = [
+      ['BÁO CÁO THỐNG KÊ TÀI CHÍNH'],
+      [''],
+      ['Tiêu đề:', data.title],
+      ['Thời gian:', data.period],
+      ['Khoảng thời gian:', data.dateRange],
+      ['Tạo lúc:', data.generatedAt],
+      ['Tạo bởi:', data.generatedBy],
+      [''],
+      ['TỔNG QUAN'],
+      ['Tổng thu nhập:', data.summary.totalIncome],
+      ['Tổng chi tiêu:', data.summary.totalExpense],
+      ['Tiết kiệm ròng:', data.summary.netSavings],
+      ['Số giao dịch:', data.summary.transactionCount],
+    ];
+    
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+    
+    // Định dạng cột
+    wsSummary['!cols'] = [
+      { wch: 25 }, // Column A
+      { wch: 20 }  // Column B
+    ];
+    
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Tổng Quan');
+    
+    // Sheet 2: Chi tiết theo danh mục
+    const categoryHeaders = ['Danh mục', 'Số tiền', 'Phần trăm (%)'];
+    const categoryRows = data.categoryBreakdown.map(cat => [
+      cat.category,
+      cat.amount,
+      cat.percentage
+    ]);
+    
+    const categoryData = [categoryHeaders, ...categoryRows];
+    const wsCategory = XLSX.utils.aoa_to_sheet(categoryData);
+    
+    // Định dạng cột cho sheet danh mục
+    wsCategory['!cols'] = [
+      { wch: 30 }, // Danh mục
+      { wch: 20 }, // Số tiền
+      { wch: 15 }  // Phần trăm
+    ];
+    
+    XLSX.utils.book_append_sheet(wb, wsCategory, 'Chi Tiết Danh Mục');
+    
+    // Xuất file
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+    console.log('📊 Excel report exported successfully');
+  } catch (error) {
+    console.error('❌ Failed to export Excel:', error);
+    throw new Error('Không thể xuất báo cáo Excel');
   }
 };
 
@@ -266,7 +332,7 @@ const downloadFile = (blob: Blob, filename: string) => {
  */
 export const exportReport = async (
   data: ReportData, 
-  format: 'json' | 'csv' | 'html' = 'json',
+  format: 'json' | 'csv' | 'excel' | 'html' = 'json',
   customFilename?: string
 ) => {
   const timestamp = new Date().toISOString().split('T')[0];
@@ -274,6 +340,9 @@ export const exportReport = async (
   
   try {
     switch (format) {
+      case 'excel':
+        exportToExcel(data, filename);
+        break;
       case 'csv':
         exportToCSV(data, filename);
         break;

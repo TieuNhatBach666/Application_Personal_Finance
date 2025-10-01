@@ -70,6 +70,14 @@ const TransactionListPage: React.FC = () => {
       categoryId: selectedCategory || undefined,
     };
     
+    console.log(' Filter Debug:', {
+      searchTerm,
+      selectedType,
+      selectedCategory,
+      newFilters,
+      pagination: pagination.limit
+    });
+    
     dispatch(setFilters(newFilters));
     dispatch(fetchTransactions({ page: 1, limit: pagination.limit, filters: newFilters }));
   };
@@ -306,14 +314,12 @@ const TransactionListPage: React.FC = () => {
                             size="small"
                             sx={{ color: 'info.main' }}
                             onClick={() => {
-                              // TODO: Implement edit functionality
-                              console.log('Edit transaction:', transaction.id);
+                              navigate(`/transactions/edit/${transaction.id}`);
                             }}
                           >
                             <Edit fontSize="small" />
                           </IconButton>
                           <IconButton
-                            size="small"
                             sx={{ color: 'error.main' }}
                             onClick={() => handleDeleteClick(transaction.id)}
                           >

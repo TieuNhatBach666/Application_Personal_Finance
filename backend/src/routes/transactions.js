@@ -9,6 +9,22 @@ const updateBudgetSpentAmount = async (userId, categoryId) => {
     console.log('🔄 Starting budget update for userId:', userId, 'categoryId:', categoryId);
     const pool = getPool();
     
+    // Kiểm tra xem có budget nào cho category này không
+    const budgetCheck = await pool.request()
+      .input('userId', sql.UniqueIdentifier, userId)
+      .input('categoryId', sql.UniqueIdentifier, categoryId)
+      .query(`
+        SELECT BudgetID, BudgetName, CategoryID 
+        FROM Budgets 
+        WHERE UserID = @userId AND CategoryID = @categoryId AND IsActive = 1
+      `);
+    
+    console.log('🔍 Found budgets for this category:', budgetCheck.recordset.length);
+    if (budgetCheck.recordset.length === 0) {
+      console.log('⚠️ No active budget found for categoryId:', categoryId);
+      return;
+    }
+    
     // Kiểm tra xem stored procedure có tồn tại không
     const checkProc = await pool.request().query(`
       SELECT COUNT(*) as count FROM sys.objects WHERE type = 'P' AND name = 'sp_UpdateBudgetSpentAmount'
@@ -118,36 +134,117 @@ const checkBudgetLimitAndNotify = async (userId, categoryId) => {
 
 const router = express.Router();
 
-// GET /api/transactions - Lấy danh sách giao dịch của user
+// GET /api/transactions - Lấy danh sách giao dịch của user với bộ lọc
 router.get('/', authenticateToken, async (req, res) => {
   try {
     console.log('📋 GET /api/transactions - User ID:', req.user.id);
+    console.log('📋 Query params:', req.query);
+    
     const pool = getPool();
     
-    const result = await pool.request()
-      .input('userId', sql.UniqueIdentifier, req.user.id)
-      .query(`
-        SELECT 
-          t.TransactionID,
-          t.UserID,
-          t.CategoryID,
-          t.Amount,
-          t.Type,
-          t.Description,
-          t.TransactionDate,
-          t.Tags,
-          t.CreatedAt,
-          t.UpdatedAt,
-          c.CategoryName as CategoryName,
-          c.Icon as CategoryIcon,
-          c.Color as CategoryColor
-        FROM Transactions t
-        INNER JOIN Categories c ON t.CategoryID = c.CategoryID
-        WHERE t.UserID = @userId
-        ORDER BY t.TransactionDate DESC, t.CreatedAt DESC
-      `);
+    // Lấy parameters từ query string
+    const { page = 1, limit = 10, search, type, categoryId, startDate, endDate } = req.query;
+    
+    console.log('📋 Filters applied:', { search, type, categoryId, startDate, endDate });
+    
+    // Tính offset cho pagination
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    
+    // Xây dựng WHERE clause và parameters động
+    let whereConditions = ['t.UserID = @userId'];
+    let queryParams = { userId: req.user.id };
+    
+    // Thêm filter theo search (tìm trong description)
+    if (search && search.trim()) {
+      whereConditions.push('t.Description LIKE @search');
+      queryParams.search = `%${search.trim()}%`;
+    }
+    
+    // Thêm filter theo type
+    if (type && ['Income', 'Expense'].includes(type)) {
+      whereConditions.push('t.Type = @type');
+      queryParams.type = type;
+    }
+    
+    // Thêm filter theo categoryId
+    if (categoryId) {
+      whereConditions.push('t.CategoryID = @categoryId');
+      queryParams.categoryId = categoryId;
+    }
+    
+    // Thêm filter theo date range
+    if (startDate) {
+      whereConditions.push('t.TransactionDate >= @startDate');
+      queryParams.startDate = startDate;
+    }
+    
+    if (endDate) {
+      whereConditions.push('t.TransactionDate <= @endDate');
+      queryParams.endDate = endDate;
+    }
+    
+    const whereClause = whereConditions.join(' AND ');
+    
+    // Query để đếm tổng số records (cho pagination)
+    const countRequest = pool.request();
+    Object.keys(queryParams).forEach(key => {
+      if (key === 'userId' || key === 'categoryId') {
+        countRequest.input(key, sql.UniqueIdentifier, queryParams[key]);
+      } else if (key === 'startDate' || key === 'endDate') {
+        countRequest.input(key, sql.Date, queryParams[key]);
+      } else {
+        countRequest.input(key, sql.NVarChar, queryParams[key]);
+      }
+    });
+    
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM Transactions t
+      INNER JOIN Categories c ON t.CategoryID = c.CategoryID
+      WHERE ${whereClause}
+    `;
+    
+    const countResult = await countRequest.query(countQuery);
+    const total = countResult.recordset[0].total;
+    
+    // Query chính với pagination
+    const mainRequest = pool.request();
+    Object.keys(queryParams).forEach(key => {
+      if (key === 'userId' || key === 'categoryId') {
+        mainRequest.input(key, sql.UniqueIdentifier, queryParams[key]);
+      } else if (key === 'startDate' || key === 'endDate') {
+        mainRequest.input(key, sql.Date, queryParams[key]);
+      } else {
+        mainRequest.input(key, sql.NVarChar, queryParams[key]);
+      }
+    });
+    
+    const mainQuery = `
+      SELECT 
+        t.TransactionID,
+        t.UserID,
+        t.CategoryID,
+        t.Amount,
+        t.Type,
+        t.Description,
+        t.TransactionDate,
+        t.Tags,
+        t.CreatedAt,
+        t.UpdatedAt,
+        c.CategoryName as CategoryName,
+        c.Icon as CategoryIcon,
+        c.Color as CategoryColor
+      FROM Transactions t
+      INNER JOIN Categories c ON t.CategoryID = c.CategoryID
+      WHERE ${whereClause}
+      ORDER BY t.TransactionDate DESC, t.CreatedAt DESC
+      OFFSET ${offset} ROWS
+      FETCH NEXT ${parseInt(limit)} ROWS ONLY
+    `;
+    
+    const result = await mainRequest.query(mainQuery);
 
-    console.log('📊 Found', result.recordset.length, 'transactions');
+    console.log('📊 Found', result.recordset.length, 'transactions (total:', total, ')');
 
     const transactions = result.recordset.map(row => ({
       id: row.TransactionID,
@@ -175,9 +272,9 @@ router.get('/', authenticateToken, async (req, res) => {
       data: {
         transactions,
         pagination: {
-          page: 1,
-          limit: 50,
-          total: transactions.length
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: total
         },
         summary: {
           totalIncome: 0,
@@ -271,18 +368,9 @@ router.post('/', authenticateToken, async (req, res) => {
         )
       `);
 
-    console.log('✅ Transaction created successfully');
+    console.log('✅ Transaction created successfully:', transactionId);
 
-    // Cập nhật số tiền đã chi của ngân sách nếu đây là giao dịch chi tiêu
-    if (type === 'Expense') {
-      console.log('💰 Updating budget spent amount for category:', categoryId);
-      await updateBudgetSpentAmount(req.user.id, categoryId);
-      
-      // Kiểm tra và tạo thông báo vượt ngân sách
-      await checkBudgetLimitAndNotify(req.user.id, categoryId);
-    }
-
-    // Trả về giao dịch đã tạo cùng thông tin category
+    // Tạo transaction object để trả về
     const newTransaction = {
       id: transactionId,
       userId: req.user.id,
@@ -302,6 +390,13 @@ router.post('/', authenticateToken, async (req, res) => {
         type: category.Type
       }
     };
+
+    // Cập nhật budget spent amount nếu là expense
+    if (type === 'Expense') {
+      console.log('🔄 Updating budget for categoryId:', categoryId);
+      await updateBudgetSpentAmount(req.user.id, categoryId);
+      await checkBudgetLimitAndNotify(req.user.id, categoryId);
+    }
 
     res.status(201).json({
       success: true,
@@ -324,6 +419,21 @@ router.get('/summary', authenticateToken, async (req, res) => {
   try {
     console.log('📊 GET /api/transactions/summary - User ID:', req.user.id);
     const pool = getPool();
+    
+    const { startDate, endDate } = req.query;
+    
+    // Build WHERE clause with date filters
+    let whereConditions = ['UserID = @userId'];
+    
+    if (startDate) {
+      whereConditions.push('TransactionDate >= @startDate');
+    }
+    
+    if (endDate) {
+      whereConditions.push('TransactionDate <= @endDate');
+    }
+    
+    const whereClause = whereConditions.join(' AND ');
 
     const summaryQuery = `
       SELECT 
@@ -331,24 +441,37 @@ router.get('/summary', authenticateToken, async (req, res) => {
         SUM(CASE WHEN Type = 'Expense' THEN Amount ELSE 0 END) as totalExpense,
         COUNT(*) as transactionCount
       FROM Transactions
-      WHERE UserID = @userId
+      WHERE ${whereClause}
     `;
 
-    const result = await pool.request()
-      .input('userId', sql.UniqueIdentifier, req.user.id)
-      .query(summaryQuery);
+    const request = pool.request()
+      .input('userId', sql.UniqueIdentifier, req.user.id);
+      
+    if (startDate) {
+      request.input('startDate', sql.Date, startDate);
+    }
+    
+    if (endDate) {
+      request.input('endDate', sql.Date, endDate);
+    }
+
+    const result = await request.query(summaryQuery);
 
     const summary = result.recordset[0];
     console.log('📈 Summary calculated:', summary);
+
+    // Handle NULL values from SQL SUM()
+    const totalIncome = summary.totalIncome !== null ? parseFloat(summary.totalIncome) : 0;
+    const totalExpense = summary.totalExpense !== null ? parseFloat(summary.totalExpense) : 0;
 
     res.json({
       success: true,
       message: 'Summary retrieved successfully',
       data: {
-        totalIncome: parseFloat(summary.totalIncome) || 0,
-        totalExpense: parseFloat(summary.totalExpense) || 0,
-        netSavings: (parseFloat(summary.totalIncome) || 0) - (parseFloat(summary.totalExpense) || 0),
-        transactionCount: summary.transactionCount
+        totalIncome: totalIncome,
+        totalExpense: totalExpense,
+        netSavings: totalIncome - totalExpense,
+        transactionCount: summary.transactionCount || 0
       }
     });
 
@@ -358,6 +481,177 @@ router.get('/summary', authenticateToken, async (req, res) => {
       success: false,
       message: 'Internal server error',
       error: error.message
+    });
+  }
+});
+
+// GET /api/transactions/:id - Lấy giao dịch theo ID
+router.get('/:id', authenticateToken, async (req, res) => {
+  try {
+    console.log('📋 GET /api/transactions/:id - Transaction ID:', req.params.id);
+    console.log('👤 User ID:', req.user.id);
+    
+    const pool = getPool();
+    const result = await pool.request()
+      .input('transactionId', sql.UniqueIdentifier, req.params.id)
+      .input('userId', sql.UniqueIdentifier, req.user.id)
+      .query(`
+        SELECT 
+          t.TransactionID as id,
+          t.Amount as amount,
+          t.Description as description,
+          t.TransactionDate as transactionDate,
+          t.Type as type,
+          t.CategoryID as categoryId,
+          c.CategoryName as categoryName,
+          c.Icon as categoryIcon,
+          c.Color as categoryColor,
+          t.CreatedAt as createdAt,
+          t.UpdatedAt as updatedAt
+        FROM Transactions t
+        LEFT JOIN Categories c ON t.CategoryID = c.CategoryID
+        WHERE t.TransactionID = @transactionId AND t.UserID = @userId
+      `);
+
+    if (result.recordset.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Giao dịch không tồn tại'
+      });
+    }
+
+    const transaction = result.recordset[0];
+    console.log('✅ Transaction found:', transaction.id);
+
+    res.json({
+      success: true,
+      data: transaction
+    });
+  } catch (error) {
+    console.error('❌ Error fetching transaction:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi lấy thông tin giao dịch'
+    });
+  }
+});
+
+// PUT /api/transactions/:id - Cập nhật giao dịch
+router.put('/:id', authenticateToken, async (req, res) => {
+  try {
+    console.log('✏️ PUT /api/transactions/:id - Transaction ID:', req.params.id);
+    console.log('📝 Request body:', req.body);
+    console.log('👤 User ID:', req.user.id);
+
+    const { amount, description, categoryId, transactionDate, type } = req.body;
+
+    // Validation
+    if (!amount || !categoryId || !transactionDate || !type) {
+      return res.status(400).json({
+        success: false,
+        message: 'Thiếu thông tin bắt buộc: amount, categoryId, transactionDate, type'
+      });
+    }
+
+    if (amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Số tiền phải lớn hơn 0'
+      });
+    }
+
+    if (!['Income', 'Expense'].includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Loại giao dịch không hợp lệ'
+      });
+    }
+
+    const pool = getPool();
+
+    // Kiểm tra giao dịch có tồn tại và thuộc về user không
+    const existingTransaction = await pool.request()
+      .input('transactionId', sql.UniqueIdentifier, req.params.id)
+      .input('userId', sql.UniqueIdentifier, req.user.id)
+      .query(`
+        SELECT TransactionID, CategoryID FROM Transactions 
+        WHERE TransactionID = @transactionId AND UserID = @userId
+      `);
+
+    if (existingTransaction.recordset.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Giao dịch không tồn tại'
+      });
+    }
+
+    const oldCategoryId = existingTransaction.recordset[0].CategoryID;
+
+    // Cập nhật giao dịch
+    await pool.request()
+      .input('transactionId', sql.UniqueIdentifier, req.params.id)
+      .input('amount', sql.Decimal(18, 2), amount)
+      .input('description', sql.NVarChar(500), description || '')
+      .input('categoryId', sql.UniqueIdentifier, categoryId)
+      .input('transactionDate', sql.DateTime2, new Date(transactionDate))
+      .input('type', sql.NVarChar(10), type)
+      .query(`
+        UPDATE Transactions SET
+          Amount = @amount,
+          Description = @description,
+          CategoryID = @categoryId,
+          TransactionDate = @transactionDate,
+          Type = @type,
+          UpdatedAt = GETUTCDATE()
+        WHERE TransactionID = @transactionId
+      `);
+
+    // Cập nhật budget spent amount cho category cũ và mới (nếu khác nhau)
+    if (type === 'Expense') {
+      if (oldCategoryId) {
+        await updateBudgetSpentAmount(req.user.id, oldCategoryId);
+      }
+      if (categoryId !== oldCategoryId) {
+        await updateBudgetSpentAmount(req.user.id, categoryId);
+        await checkBudgetLimitAndNotify(req.user.id, categoryId);
+      }
+    }
+
+    // Lấy thông tin giao dịch đã cập nhật
+    const updatedResult = await pool.request()
+      .input('transactionId', sql.UniqueIdentifier, req.params.id)
+      .input('userId', sql.UniqueIdentifier, req.user.id)
+      .query(`
+        SELECT 
+          t.TransactionID as id,
+          t.Amount as amount,
+          t.Description as description,
+          t.TransactionDate as transactionDate,
+          t.Type as type,
+          t.CategoryID as categoryId,
+          c.CategoryName as categoryName,
+          c.Icon as categoryIcon,
+          c.Color as categoryColor,
+          t.CreatedAt as createdAt,
+          t.UpdatedAt as updatedAt
+        FROM Transactions t
+        LEFT JOIN Categories c ON t.CategoryID = c.CategoryID
+        WHERE t.TransactionID = @transactionId AND t.UserID = @userId
+      `);
+
+    const updatedTransaction = updatedResult.recordset[0];
+    console.log('✅ Transaction updated successfully:', updatedTransaction.id);
+
+    res.json({
+      success: true,
+      message: 'Giao dịch đã được cập nhật thành công',
+      data: updatedTransaction
+    });
+  } catch (error) {
+    console.error('❌ Error updating transaction:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi cập nhật giao dịch'
     });
   }
 });

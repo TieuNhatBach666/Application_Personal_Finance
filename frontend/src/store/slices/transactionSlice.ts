@@ -48,6 +48,9 @@ export const fetchTransactions = createAsyncThunk(
     if (params?.filters?.type) queryParams.append('type', params.filters.type);
     if (params?.filters?.search) queryParams.append('search', params.filters.search);
 
+    console.log('🔍 fetchTransactions params:', params);
+    console.log('🔍 queryParams:', queryParams.toString());
+
     const response = await api.get<ApiResponse<{
       transactions: Transaction[];
       pagination: PaginationState;
@@ -127,7 +130,7 @@ const transactionSlice = createSlice({
         state.loading = false;
         state.items = action.payload.transactions;
         state.pagination = action.payload.pagination;
-        state.summary = action.payload.summary;
+        // Don't overwrite summary from transaction list - use fetchTransactionSummary instead
       })
       .addCase(fetchTransactions.rejected, (state, action) => {
         state.loading = false;

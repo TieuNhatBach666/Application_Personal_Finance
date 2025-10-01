@@ -1,422 +1,380 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
-  Container,
-  Typography,
   Paper,
-  Grid,
+  Typography,
+  Avatar,
   Card,
   CardContent,
-  Avatar,
   Chip,
   Divider,
-  IconButton,
+  Grid,
   Fade,
   Slide,
   Zoom,
-  useTheme,
-  alpha,
+  Container,
+  Stack,
 } from '@mui/material';
 import {
   Code,
+  Dashboard,
+  Storage,
   Palette,
-  School,
-  CalendarToday,
-  Person,
-  Copyright,
-  Star,
-  GitHub,
-  LinkedIn,
-  Email,
-  Phone,
-  LocationOn,
-  Favorite,
+  Security,
+  Speed,
+  Psychology,
   EmojiEvents,
-  Timeline,
-  AutoAwesome,
+  GitHub,
+  Email,
+  LinkedIn,
+  Language,
 } from '@mui/icons-material';
-import { useUserSettings } from '../../hooks/useUserSettings';
 
 const AboutPage: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
-  const { getText } = useUserSettings();
-  const theme = useTheme();
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 100);
-    return () => clearTimeout(timer);
+  React.useEffect(() => {
+    setIsVisible(true);
   }, []);
 
-  const teamMembers = [
-    {
-      name: 'Tiểu Nhất Bạch',
-      role: 'Người Phụ Trách Thiết Kế Giao Diện',
-      icon: <Palette />,
-      color: '#e74c3c',
-      description: 'Chuyên về UI/UX Design, tạo ra những giao diện đẹp mắt và thân thiện với người dùng'
-    },
-    {
-      name: 'Tiểu Nhất Bạch',
-      role: 'Người Phụ Trách Viết Code',
-      icon: <Code />,
-      color: '#3498db',
-      description: 'Phát triển backend và frontend, đảm bảo hiệu suất và bảo mật của ứng dụng'
-    },
-    {
-      name: 'Tiểu Nhất Bạch',
-      role: 'Người Phụ Trách Quản Lý Dự Án',
-      icon: <EmojiEvents />,
-      color: '#f39c12',
-      description: 'Điều phối dự án, đảm bảo tiến độ và chất lượng sản phẩm'
-    },
-    {
-      name: 'Tiểu Nhất Bạch',
-      role: 'Người Phụ Trách Kiểm Thử',
-      icon: <AutoAwesome />,
-      color: '#9b59b6',
-      description: 'Đảm bảo chất lượng phần mềm thông qua các quy trình kiểm thử chặt chẽ'
-    }
+  const techStack = [
+    { name: 'React', icon: '⚛️', color: '#61DAFB' },
+    { name: 'TypeScript', icon: '📘', color: '#3178C6' },
+    { name: 'Node.js', icon: '🟢', color: '#339933' },
+    { name: 'SQL Server', icon: '🗄️', color: '#CC2927' },
+    { name: 'Material-UI', icon: '🎨', color: '#007FFF' },
+    { name: 'Redux Toolkit', icon: '🔧', color: '#764ABC' },
   ];
 
-  const projectInfo = {
-    name: 'Personal Finance Manager',
-    version: '1.0.0',
-    foundingDate: '27/09/2025',
-    studentId: '533312410124',
-    technologies: ['React', 'TypeScript', 'Node.js', 'SQL Server', 'Material-UI'],
-    features: ['Quản lý giao dịch', 'Thống kê chi tiêu', 'Ngân sách', 'Báo cáo', 'Sao lưu dữ liệu']
-  };
+  const features = [
+    { icon: <Dashboard />, title: 'Dashboard Trực Quan', desc: 'Theo dõi tài chính realtime' },
+    { icon: <Storage />, title: 'Quản Lý Giao Dịch', desc: 'Thêm, sửa, xóa dễ dàng' },
+    { icon: <Palette />, title: 'Giao Diện Đẹp', desc: 'Hiện đại & thân thiện' },
+    { icon: <Security />, title: 'Bảo Mật Cao', desc: 'JWT Authentication' },
+    { icon: <Speed />, title: 'Hiệu Năng Tốt', desc: 'Tối ưu & nhanh chóng' },
+    { icon: <Psychology />, title: 'AI Insights', desc: 'Gợi ý thông minh' },
+  ];
+
+  const timeline = [
+    { phase: 'Giai Đoạn 1', title: 'Phân Tích & Thiết Kế', person: 'Tiểu Nhất Bạch', date: 'Tuần 1-2' },
+    { phase: 'Giai Đoạn 2', title: 'Database & Backend API', person: 'Tiểu Nhất Bạch', date: 'Tuần 3-4' },
+    { phase: 'Giai Đoạn 3', title: 'Frontend UI/UX', person: 'Tiểu Nhất Bạch', date: 'Tuần 5-6' },
+    { phase: 'Giai Đoạn 4', title: 'Tích Hợp & Testing', person: 'Tiểu Nhất Bạch', date: 'Tuần 7-8' },
+    { phase: 'Giai Đoạn 5', title: 'Hoàn Thiện & Deploy', person: 'Tiểu Nhất Bạch', date: 'Tuần 9-10' },
+  ];
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ minHeight: '100vh' }}>
+    <Box sx={{ minHeight: '100vh', py: 4 }}>
+      <Container maxWidth="lg">
         {/* Header Section */}
         <Fade in={isVisible} timeout={1000}>
-          <Box sx={{ textAlign: 'center', mb: 6 }}>
-            <Typography
-              variant="h2"
-              sx={{
-                fontWeight: 800,
-                background: 'linear-gradient(45deg, #667eea 0%, #764ba2 100%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                mb: 2,
-                fontSize: { xs: '2.5rem', md: '3.5rem' }
-              }}
-            >
-              Personal Finance Manager
-            </Typography>
-            <Typography
-              variant="h5"
-              sx={{
-                color: 'text.secondary',
-                fontWeight: 300,
-                mb: 4
-              }}
-            >
-              Ứng dụng quản lý tài chính cá nhân thông minh
-            </Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
-              {projectInfo.technologies.map((tech, index) => (
-                <Zoom in={isVisible} timeout={1000 + index * 200} key={tech}>
-                  <Chip
-                    label={tech}
-                    sx={{
-                      background: 'linear-gradient(45deg, #667eea 0%, #764ba2 100%)',
-                      color: 'white',
-                      fontWeight: 600,
-                      '&:hover': {
-                        transform: 'scale(1.05)',
-                        transition: 'transform 0.2s'
-                      }
-                    }}
-                  />
-                </Zoom>
-              ))}
+          <Paper
+            sx={{
+              p: 6,
+              mb: 4,
+              borderRadius: 4,
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              textAlign: 'center',
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                opacity: 0.1,
+              },
+            }}
+          >
+            <Box sx={{ position: 'relative', zIndex: 1 }}>
+              <Typography variant="h3" sx={{ fontWeight: 800, mb: 2, textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                💰 Personal Finance Manager
+              </Typography>
+              <Typography variant="h6" sx={{ opacity: 0.95, mb: 3 }}>
+                Ứng Dụng Quản Lý Tài Chính Cá Nhân Thông Minh
+              </Typography>
+              <Chip
+                label="Version 1.0.0"
+                sx={{
+                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  color: 'white',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  px: 2,
+                  py: 2.5,
+                }}
+              />
             </Box>
-          </Box>
+          </Paper>
         </Fade>
 
-        {/* Project Info Section */}
-        <Slide direction="up" in={isVisible} timeout={1200}>
-          <Paper
-            sx={{
-              p: 4,
-              mb: 4,
-              borderRadius: 4,
-              background: theme.palette.mode === 'dark'
-                ? 'linear-gradient(135deg, #2d3748 0%, #1a202c 100%)'
-                : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-              boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-            }}
-          >
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-                color: 'primary.main',
-                mb: 3,
-                textAlign: 'center'
-              }}
-            >
-              📋 Thông Tin Dự Án
-            </Typography>
+        <Grid container spacing={4}>
+          {/* Thông tin tác giả */}
+          <Grid item xs={12} md={4}>
+            <Slide direction="right" in={isVisible} timeout={1200}>
+              <Paper
+                sx={{
+                  p: 4,
+                  borderRadius: 4,
+                  textAlign: 'center',
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+                  height: '100%',
+                }}
+              >
+                <Zoom in={isVisible} timeout={1500}>
+                  <Avatar
+                    sx={{
+                      width: 150,
+                      height: 150,
+                      mx: 'auto',
+                      mb: 3,
+                      fontSize: '4rem',
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      boxShadow: '0 8px 24px rgba(102, 126, 234, 0.4)',
+                    }}
+                  >
+                    👨‍💻
+                  </Avatar>
+                </Zoom>
 
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Card sx={{ height: '100%', borderRadius: 3 }}>
-                  <CardContent sx={{ p: 3 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <CalendarToday sx={{ color: '#e74c3c', mr: 2 }} />
-                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        Ngày Thành Lập
-                      </Typography>
-                    </Box>
-                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#e74c3c' }}>
-                      {projectInfo.foundingDate}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+                <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+                  Tiểu Nhất Bạch
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                  Full-Stack Developer
+                </Typography>
 
-              <Grid item xs={12} md={6}>
-                <Card sx={{ height: '100%', borderRadius: 3 }}>
-                  <CardContent sx={{ p: 3 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <School sx={{ color: '#3498db', mr: 2 }} />
-                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        Mã Số Sinh Viên
-                      </Typography>
-                    </Box>
-                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#3498db' }}>
-                      {projectInfo.studentId}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+                <Divider sx={{ my: 3 }} />
 
-              <Grid item xs={12} md={6}>
-                <Card sx={{ height: '100%', borderRadius: 3 }}>
-                  <CardContent sx={{ p: 3 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Star sx={{ color: '#f39c12', mr: 2 }} />
-                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        Phiên Bản
-                      </Typography>
-                    </Box>
-                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#f39c12' }}>
-                      {projectInfo.version}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Chip
+                    icon={<GitHub />}
+                    label="TieuNhatBach666"
+                    sx={{ justifyContent: 'flex-start' }}
+                  />
+                  <Chip
+                    icon={<Email />}
+                    label="tieunhatbach@dev.com"
+                    sx={{ justifyContent: 'flex-start' }}
+                  />
+                  <Chip
+                    icon={<Language />}
+                    label="Vietnam"
+                    sx={{ justifyContent: 'flex-start' }}
+                  />
+                </Box>
 
-              <Grid item xs={12} md={6}>
-                <Card sx={{ height: '100%', borderRadius: 3 }}>
-                  <CardContent sx={{ p: 3 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Timeline sx={{ color: '#9b59b6', mr: 2 }} />
-                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        Trạng Thái
-                      </Typography>
-                    </Box>
-                    <Chip
-                      label="Hoàn Thành"
-                      sx={{
-                        background: 'linear-gradient(45deg, #27ae60 0%, #2ecc71 100%)',
-                        color: 'white',
-                        fontWeight: 600,
-                        fontSize: '1rem',
-                        px: 2
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          </Paper>
-        </Slide>
+                <Box sx={{ mt: 4 }}>
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
+                    Vai Trò Trong Dự Án
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center' }}>
+                    <Chip label="Project Lead" color="primary" size="small" />
+                    <Chip label="Backend Dev" color="secondary" size="small" />
+                    <Chip label="Frontend Dev" color="success" size="small" />
+                    <Chip label="UI/UX Design" color="warning" size="small" />
+                    <Chip label="Database Admin" color="info" size="small" />
+                  </Box>
+                </Box>
+              </Paper>
+            </Slide>
+          </Grid>
 
-        {/* Team Section */}
-        <Slide direction="up" in={isVisible} timeout={1400}>
-          <Paper
-            sx={{
-              p: 4,
-              mb: 4,
-              borderRadius: 4,
-              background: theme.palette.mode === 'dark'
-                ? 'linear-gradient(135deg, #2d3748 0%, #1a202c 100%)'
-                : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-              boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-            }}
-          >
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-                color: 'primary.main',
-                mb: 3,
-                textAlign: 'center'
-              }}
-            >
-              👥 Đội Ngũ Phát Triển
-            </Typography>
+          {/* Tính năng chính */}
+          <Grid item xs={12} md={8}>
+            <Slide direction="left" in={isVisible} timeout={1200}>
+              <Paper
+                sx={{
+                  p: 4,
+                  borderRadius: 4,
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+                }}
+              >
+                <Typography variant="h5" sx={{ fontWeight: 700, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <EmojiEvents sx={{ color: '#FFD700' }} />
+                  Tính Năng Nổi Bật
+                </Typography>
 
-            <Grid container spacing={3}>
-              {teamMembers.map((member, index) => (
-                <Grid item xs={12} md={6} key={index}>
-                  <Zoom in={isVisible} timeout={1500 + index * 200}>
-                    <Card
-                      sx={{
-                        height: '100%',
-                        borderRadius: 3,
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          transform: 'translateY(-8px)',
-                          boxShadow: '0 20px 40px rgba(0,0,0,0.15)'
-                        }
-                      }}
-                    >
-                      <CardContent sx={{ p: 3, textAlign: 'center' }}>
-                        <Avatar
+                <Grid container spacing={2}>
+                  {features.map((feature, index) => (
+                    <Grid item xs={12} sm={6} key={index}>
+                      <Zoom in={isVisible} timeout={1000 + index * 200}>
+                        <Card
                           sx={{
-                            width: 80,
-                            height: 80,
-                            mx: 'auto',
-                            mb: 2,
-                            background: `linear-gradient(45deg, ${member.color} 0%, ${member.color}aa 100%)`,
-                            fontSize: '2rem'
+                            height: '100%',
+                            transition: 'all 0.3s',
+                            '&:hover': {
+                              transform: 'translateY(-8px)',
+                              boxShadow: '0 12px 24px rgba(0,0,0,0.15)',
+                            },
                           }}
                         >
-                          {member.icon}
-                        </Avatar>
-                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                          {member.name}
-                        </Typography>
-                        <Chip
-                          label={member.role}
-                          sx={{
-                            background: `linear-gradient(45deg, ${member.color} 0%, ${member.color}aa 100%)`,
+                          <CardContent>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                              <Box
+                                sx={{
+                                  p: 1.5,
+                                  borderRadius: 2,
+                                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                  color: 'white',
+                                  display: 'flex',
+                                }}
+                              >
+                                {feature.icon}
+                              </Box>
+                              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                {feature.title}
+                              </Typography>
+                            </Box>
+                            <Typography variant="body2" color="text.secondary">
+                              {feature.desc}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Zoom>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Paper>
+            </Slide>
+          </Grid>
+
+          {/* Tech Stack */}
+          <Grid item xs={12}>
+            <Fade in={isVisible} timeout={1800}>
+              <Paper
+                sx={{
+                  p: 4,
+                  borderRadius: 4,
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+                }}
+              >
+                <Typography variant="h5" sx={{ fontWeight: 700, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Code />
+                  Công Nghệ Sử Dụng
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                  {techStack.map((tech, index) => (
+                    <Zoom in={isVisible} timeout={1500 + index * 100} key={index}>
+                      <Chip
+                        icon={<span style={{ fontSize: '1.5rem' }}>{tech.icon}</span>}
+                        label={tech.name}
+                        sx={{
+                          px: 2,
+                          py: 3,
+                          fontSize: '1rem',
+                          fontWeight: 600,
+                          borderColor: tech.color,
+                          '&:hover': {
+                            backgroundColor: tech.color,
                             color: 'white',
-                            fontWeight: 600,
-                            mb: 2
-                          }}
-                        />
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                          {member.description}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Zoom>
-                </Grid>
-              ))}
-            </Grid>
-          </Paper>
-        </Slide>
+                            transform: 'scale(1.1)',
+                          },
+                          transition: 'all 0.3s',
+                        }}
+                        variant="outlined"
+                      />
+                    </Zoom>
+                  ))}
+                </Box>
+              </Paper>
+            </Fade>
+          </Grid>
 
-        {/* Features Section */}
-        <Slide direction="up" in={isVisible} timeout={1600}>
-          <Paper
-            sx={{
-              p: 4,
-              mb: 4,
-              borderRadius: 4,
-              background: theme.palette.mode === 'dark'
-                ? 'linear-gradient(135deg, #2d3748 0%, #1a202c 100%)'
-                : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-              boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-            }}
-          >
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-                color: 'primary.main',
-                mb: 3,
-                textAlign: 'center'
-              }}
-            >
-              ⚡ Tính Năng Chính
-            </Typography>
-
-            <Grid container spacing={2}>
-              {projectInfo.features.map((feature, index) => (
-                <Grid item xs={12} sm={6} md={4} key={feature}>
-                  <Zoom in={isVisible} timeout={1700 + index * 100}>
-                    <Card
-                      sx={{
-                        textAlign: 'center',
-                        p: 2,
-                        borderRadius: 3,
-                        background: `linear-gradient(45deg, ${theme.palette.primary.main}15 0%, ${theme.palette.secondary.main}15 100%)`,
-                        border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          transform: 'scale(1.05)',
-                          boxShadow: '0 10px 20px rgba(0,0,0,0.1)'
-                        }
-                      }}
-                    >
-                      <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                        {feature}
-                      </Typography>
-                    </Card>
-                  </Zoom>
-                </Grid>
-              ))}
-            </Grid>
-          </Paper>
-        </Slide>
-
-        {/* Copyright Section */}
-        <Fade in={isVisible} timeout={2000}>
-          <Paper
-            sx={{
-              p: 4,
-              borderRadius: 4,
-              background: `linear-gradient(45deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-              color: 'white',
-              textAlign: 'center'
-            }}
-          >
-            <Copyright sx={{ fontSize: 40, mb: 2 }} />
-            <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
-              Bản Quyền Tác Giả
-            </Typography>
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              © 2025 Tiểu Nhất Bạch
-            </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              Tất cả quyền được bảo lưu. Phần mềm này được phát triển cho mục đích học tập và nghiên cứu.
-            </Typography>
-            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
-              <Chip
-                icon={<Favorite />}
-                label="Made with Love"
+          {/* Timeline phát triển */}
+          <Grid item xs={12}>
+            <Fade in={isVisible} timeout={2000}>
+              <Paper
                 sx={{
-                  background: 'rgba(255,255,255,0.2)',
-                  color: 'white',
-                  fontWeight: 600
+                  p: 4,
+                  borderRadius: 4,
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
                 }}
-              />
-              <Chip
-                icon={<School />}
-                label="Đồ Án Kết Thúc Môn"
+              >
+                <Typography variant="h5" sx={{ fontWeight: 700, mb: 4, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  🗓️ Quy Trình Phát Triển
+                </Typography>
+
+                <Stack spacing={3}>
+                  {timeline.map((item, index) => (
+                    <Zoom in={isVisible} timeout={1800 + index * 100} key={index}>
+                      <Card
+                        sx={{
+                          transition: 'all 0.3s',
+                          '&:hover': {
+                            transform: 'translateX(10px)',
+                            boxShadow: '0 12px 28px rgba(0,0,0,0.15)',
+                          },
+                          borderLeft: '4px solid',
+                          borderColor: 'primary.main',
+                        }}
+                      >
+                        <CardContent>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                              <Avatar
+                                sx={{
+                                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {index + 1}
+                              </Avatar>
+                              <Box>
+                                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                  {item.title}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                  👤 Phụ trách: {item.person}
+                                </Typography>
+                              </Box>
+                            </Box>
+                            <Box sx={{ textAlign: 'right' }}>
+                              <Chip label={item.phase} color="primary" size="small" sx={{ mb: 0.5 }} />
+                              <Typography variant="caption" display="block" color="text.secondary">
+                                {item.date}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Zoom>
+                  ))}
+                </Stack>
+              </Paper>
+            </Fade>
+          </Grid>
+
+          {/* Footer */}
+          <Grid item xs={12}>
+            <Fade in={isVisible} timeout={2200}>
+              <Paper
                 sx={{
-                  background: 'rgba(255,255,255,0.2)',
-                  color: 'white',
-                  fontWeight: 600
+                  p: 4,
+                  borderRadius: 4,
+                  textAlign: 'center',
+                  background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
                 }}
-              />
-            </Box>
-          </Paper>
-        </Fade>
-      </Box>
-    </Container>
+              >
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                  📜 Bản Quyền
+                </Typography>
+                <Typography variant="body1" color="text.secondary">
+                  © 2025 Tiểu Nhất Bạch. All Rights Reserved.
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  Đồ Án Kết Thúc Môn - Quản Lý Tài Chính Cá Nhân
+                </Typography>
+              </Paper>
+            </Fade>
+          </Grid>
+        </Grid>
+      </Container>
+    </Box>
   );
 };
 

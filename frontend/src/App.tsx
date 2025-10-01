@@ -16,6 +16,7 @@ import RegisterPage from './pages/Auth/RegisterPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import AddTransactionPage from './pages/Transactions/AddTransactionPage';
 import TransactionListPage from './pages/Transactions/TransactionListPage';
+import EditTransactionPage from './pages/Transactions/EditTransactionPage';
 import CategoriesPage from './pages/Categories/CategoriesPage';
 import StatisticsPage from './pages/Statistics/StatisticsPage';
 import BudgetPage from './pages/Budget/BudgetPage';
@@ -129,6 +130,14 @@ const AppContent: React.FC = () => {
             element={
               <ProtectedRoute>
                 <AddTransactionPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/transactions/edit/:id"
+            element={
+              <ProtectedRoute>
+                <EditTransactionPage />
               </ProtectedRoute>
             }
           />

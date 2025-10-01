@@ -87,6 +87,7 @@ export const fetchBudgets = createAsyncThunk(
       }
 
       const data = await response.json();
+      console.log('🔍 fetchBudgets response:', data);
       return data.data;
     } catch (error: any) {
       return rejectWithValue(error.message);
@@ -288,9 +289,11 @@ const budgetSlice = createSlice({
       })
       .addCase(updateBudget.fulfilled, (state, action: PayloadAction<Budget>) => {
         state.loading = false;
-        const index = state.budgets.findIndex(budget => budget.id === action.payload.id);
-        if (index !== -1) {
-          state.budgets[index] = action.payload;
+        if (action.payload && action.payload.id) {
+          const index = state.budgets.findIndex(budget => budget.id === action.payload.id);
+          if (index !== -1) {
+            state.budgets[index] = action.payload;
+          }
         }
       })
       .addCase(updateBudget.rejected, (state, action) => {

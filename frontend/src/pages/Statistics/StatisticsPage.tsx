@@ -348,13 +348,13 @@ const StatisticsPage: React.FC = () => {
                                 <ListItemText>Xuất HTML (In PDF)</ListItemText>
                             </MenuItem>
                             <MenuItem onClick={() => {
-                                handleExportReport('csv');
+                                handleExportReport('excel');
                                 setExportMenuAnchor(null);
                             }}>
                                 <ListItemIcon>
                                     <TableChart fontSize="small" />
                                 </ListItemIcon>
-                                <ListItemText>Xuất CSV (Excel)</ListItemText>
+                                <ListItemText>Xuất Excel (XLSX)</ListItemText>
                             </MenuItem>
                             <MenuItem onClick={() => {
                                 handleExportReport('json');

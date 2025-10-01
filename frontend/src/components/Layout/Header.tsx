@@ -76,7 +76,6 @@ const Header: React.FC<HeaderProps> = ({ drawerWidth }) => {
                 <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
                     💰 Quản lý Tài chính Cá nhân
                 </Typography>
-
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <IconButton color="inherit">
                         <Notifications />
@@ -90,8 +89,17 @@ const Header: React.FC<HeaderProps> = ({ drawerWidth }) => {
                         onClick={handleMenuOpen}
                         color="inherit"
                     >
-                        <Avatar sx={{ width: 32, height: 32 }}>
-                            {user?.firstName?.charAt(0) || <AccountCircle />}
+                        <Avatar 
+                            src={(user as any)?.avatarUrl?.startsWith('data:') ? (user as any).avatarUrl : undefined}
+                            sx={{ 
+                                width: 32, 
+                                height: 32,
+                                fontSize: (user as any)?.avatarUrl && !(user as any)?.avatarUrl?.startsWith('data:') ? '1.2rem' : '1rem',
+                            }}
+                        >
+                            {(user as any)?.avatarUrl && !(user as any)?.avatarUrl?.startsWith('data:')
+                                ? (user as any).avatarUrl
+                                : (user?.firstName?.charAt(0) || 'U')}
                         </Avatar>
                     </IconButton>
 

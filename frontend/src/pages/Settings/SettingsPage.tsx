@@ -131,6 +131,20 @@ const SettingsPage: React.FC = () => {
     avatar: user?.avatar || '',
   });
 
+  // State cho avatar
+  const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
+  const [selectedAvatar, setSelectedAvatar] = useState(profileData.avatar);
+  
+  // Danh sách emoji avatar mặc định
+  const defaultAvatars = [
+    '😀', '😃', '😄', '😁', '😊', '😇', '🙂', '🙃',
+    '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
+    '🤗', '🤩', '🤔', '🤨', '😐', '😑', '😶', '🙄',
+    '😏', '😣', '😥', '😮', '🤐', '😯', '😪', '😫',
+    '👨', '👩', '👦', '👧', '👶', '👴', '👵', '🧑',
+    '👨‍💼', '👩‍💼', '👨‍🎓', '👩‍🎓', '👨‍💻', '👩‍💻', '👨‍🔬', '👩‍🔬',
+  ];
+
   // Get settings from useUserSettings (current active settings) and Redux store
   const appSettings = {
     theme: theme || settings.appearance?.theme || 'light',
@@ -184,8 +198,12 @@ const SettingsPage: React.FC = () => {
         firstName: user.firstName || prev.firstName,
         lastName: user.lastName || prev.lastName,
         email: user.email || prev.email,
-        avatar: (user as any).avatar || prev.avatar,
+        avatar: (user as any).avatarUrl || (user as any).avatar || prev.avatar,
       }));
+      // Cập nhật selectedAvatar để sync
+      if ((user as any).avatarUrl) {
+        setSelectedAvatar((user as any).avatarUrl);
+      }
     }
   }, [user]);
 
@@ -196,10 +214,49 @@ const SettingsPage: React.FC = () => {
 
   const handleProfileSave = async () => {
     try {
-      await dispatch(updateUser(profileData)).unwrap();
+      // Map avatar to avatarUrl for backend
+      const userData = {
+        ...profileData,
+        avatarUrl: profileData.avatar,
+      };
+      await dispatch(updateUser(userData)).unwrap();
       setEditingProfile(false);
     } catch (error) {
       console.error('Failed to update profile:', error);
+    }
+  };
+
+  const handleAvatarSelect = async (avatar: string) => {
+    setSelectedAvatar(avatar);
+    setProfileData({ ...profileData, avatar });
+    
+    // Lưu luôn vào database
+    try {
+      await dispatch(updateUser({ avatarUrl: avatar })).unwrap();
+      setAvatarDialogOpen(false);
+    } catch (error) {
+      console.error('Failed to update avatar:', error);
+    }
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64String = reader.result as string;
+        setSelectedAvatar(base64String);
+        setProfileData({ ...profileData, avatar: base64String });
+        
+        // Lưu luôn vào database
+        try {
+          await dispatch(updateUser({ avatarUrl: base64String })).unwrap();
+          setAvatarDialogOpen(false);
+        } catch (error) {
+          console.error('Failed to update avatar:', error);
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -415,19 +472,38 @@ const SettingsPage: React.FC = () => {
                 boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
               }}
             >
-              <Avatar
-                src={profileData.avatar}
-                sx={{
-                  width: 100,
-                  height: 100,
-                  mx: 'auto',
-                  mb: 2,
-                  border: '4px solid white',
-                  boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
-                }}
-              >
-                {profileData.firstName?.charAt(0) || 'U'}
-              </Avatar>
+              <Box sx={{ position: 'relative', display: 'inline-block', mx: 'auto', mb: 2 }}>
+                <Avatar
+                  src={profileData.avatar?.startsWith('data:') ? profileData.avatar : undefined}
+                  sx={{
+                    width: 100,
+                    height: 100,
+                    border: '4px solid white',
+                    boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
+                    fontSize: profileData.avatar && !profileData.avatar.startsWith('data:') ? '3rem' : '2rem',
+                  }}
+                >
+                  {profileData.avatar && !profileData.avatar.startsWith('data:') 
+                    ? profileData.avatar 
+                    : profileData.firstName?.charAt(0) || 'U'}
+                </Avatar>
+                <IconButton
+                  onClick={() => setAvatarDialogOpen(true)}
+                  sx={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    backgroundColor: 'white',
+                    color: 'primary.main',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255,255,255,0.9)',
+                    },
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                  }}
+                >
+                  <PhotoCamera />
+                </IconButton>
+              </Box>
               
               <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
                 {profileData.firstName} {profileData.lastName}
@@ -1004,6 +1080,88 @@ const SettingsPage: React.FC = () => {
             disabled={!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
           >
             Đổi Mật Khẩu
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Avatar Selection Dialog */}
+      <Dialog 
+        open={avatarDialogOpen} 
+        onClose={() => setAvatarDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          📸 Chọn Ảnh Đại Diện
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+              Tải lên ảnh của bạn:
+            </Typography>
+            <Button
+              variant="outlined"
+              component="label"
+              startIcon={<Upload />}
+              fullWidth
+              sx={{ 
+                textTransform: 'none',
+                borderRadius: 2,
+                py: 1.5,
+              }}
+            >
+              Tải ảnh lên
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={handleAvatarUpload}
+              />
+            </Button>
+          </Box>
+
+          <Divider sx={{ my: 3 }}>
+            <Chip label="Hoặc chọn emoji" size="small" />
+          </Divider>
+
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+              Chọn emoji yêu thích:
+            </Typography>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(8, 1fr)',
+                gap: 1,
+                maxHeight: 300,
+                overflow: 'auto',
+              }}
+            >
+              {defaultAvatars.map((emoji, index) => (
+                <IconButton
+                  key={index}
+                  onClick={() => handleAvatarSelect(emoji)}
+                  sx={{
+                    fontSize: '2rem',
+                    border: selectedAvatar === emoji ? '3px solid' : '1px solid',
+                    borderColor: selectedAvatar === emoji ? 'primary.main' : 'divider',
+                    borderRadius: 2,
+                    '&:hover': {
+                      backgroundColor: 'action.hover',
+                      transform: 'scale(1.1)',
+                    },
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {emoji}
+                </IconButton>
+              ))}
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAvatarDialogOpen(false)} sx={{ textTransform: 'none' }}>
+            Đóng
           </Button>
         </DialogActions>
       </Dialog>
