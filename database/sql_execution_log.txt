@@ -1,0 +1,51 @@
+Changed database context to 'master'.
+dü?Ä B·∫ÆT ƒê·∫¶U THI·∫æT L·∫¨P PERSONAL FINANCE MANAGER DATABASE
+düìÖ Th·ªùi gian: 2025-10-08 09:20:15
+düë§ TA°c gi·∫£: Ti·ªÉu Nh·∫•t B·∫°ch
+dü?Ø M·ª•c tiA™u: T·∫°o database hoA†n ch·ªânh v·ªõi t·∫•t c·∫£ ch·ª©c nƒÉng
+düí? B·∫£n quy·ªÅn: ¬© Ti·ªÉu Nh·∫•t B·∫°ch 2025
+ 
+düì? B∆Ø·ª?C 1: T·∫°o Database PersonalFinanceDB...
+düóëÔ∏è ƒêA£ xA≥a database c≈©
+‚úÖ Database PersonalFinanceDB ƒëA£ ƒë∆∞·ª£c t·∫°o thA†nh cA¥ng
+Changed database context to 'PersonalFinanceDB'.
+Msg 111, Level 15, State 1, Server TieuNhatBach666\TIEUNHATBACH, Line 253
+'CREATE VIEW' must be the first statement in a query batch.
+Msg 111, Level 15, State 1, Server TieuNhatBach666\TIEUNHATBACH, Line 271
+'CREATE VIEW' must be the first statement in a query batch.
+Msg 111, Level 15, State 1, Server TieuNhatBach666\TIEUNHATBACH, Line 297
+'CREATE VIEW' must be the first statement in a query batch.
+Msg 111, Level 15, State 1, Server TieuNhatBach666\TIEUNHATBACH, Line 317
+'CREATE FUNCTION' must be the first statement in a query batch.
+Msg 137, Level 15, State 2, Server TieuNhatBach666\TIEUNHATBACH, Line 336
+Must declare the scalar variable "@BudgetID".
+Msg 111, Level 15, State 1, Server TieuNhatBach666\TIEUNHATBACH, Line 342
+'CREATE FUNCTION' must be the first statement in a query batch.
+Msg 137, Level 15, State 2, Server TieuNhatBach666\TIEUNHATBACH, Line 357
+Must declare the scalar variable "@UserID".
+Msg 111, Level 15, State 1, Server TieuNhatBach666\TIEUNHATBACH, Line 372
+'CREATE/ALTER PROCEDURE' must be the first statement in a query batch.
+Msg 111, Level 15, State 1, Server TieuNhatBach666\TIEUNHATBACH, Line 394
+'CREATE/ALTER PROCEDURE' must be the first statement in a query batch.
+Msg 134, Level 15, State 1, Server TieuNhatBach666\TIEUNHATBACH, Line 405
+The variable name '@UserID' has already been declared. Variable names must be unique within a query batch or stored procedure.
+Msg 137, Level 15, State 2, Server TieuNhatBach666\TIEUNHATBACH, Line 410
+Must declare the scalar variable "@CategoryID".
+Msg 137, Level 15, State 2, Server TieuNhatBach666\TIEUNHATBACH, Line 417
+Must declare the scalar variable "@CategoryID".
+Msg 137, Level 15, State 2, Server TieuNhatBach666\TIEUNHATBACH, Line 440
+Must declare the scalar variable "@CategoryID".
+Msg 134, Level 15, State 1, Server TieuNhatBach666\TIEUNHATBACH, Line 452
+The variable name '@UserID' has already been declared. Variable names must be unique within a query batch or stored procedure.
+Msg 137, Level 15, State 2, Server TieuNhatBach666\TIEUNHATBACH, Line 468
+Must declare the scalar variable "@CategoryID".
+Msg 134, Level 15, State 1, Server TieuNhatBach666\TIEUNHATBACH, Line 480
+The variable name '@UserID' has already been declared. Variable names must be unique within a query batch or stored procedure.
+Msg 137, Level 15, State 2, Server TieuNhatBach666\TIEUNHATBACH, Line 492
+Must declare the scalar variable "@Title".
+Msg 111, Level 15, State 1, Server TieuNhatBach666\TIEUNHATBACH, Line 505
+'CREATE TRIGGER' must be the first statement in a query batch.
+Msg 111, Level 15, State 1, Server TieuNhatBach666\TIEUNHATBACH, Line 519
+'CREATE TRIGGER' must be the first statement in a query batch.
+Msg 134, Level 15, State 1, Server TieuNhatBach666\TIEUNHATBACH, Line 606
+The variable name '@UserID' has already been declared. Variable names must be unique within a query batch or stored procedure.

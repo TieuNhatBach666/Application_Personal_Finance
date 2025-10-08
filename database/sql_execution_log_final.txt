@@ -1,0 +1,111 @@
+Changed database context to 'master'.
+d�?� BẮT ĐẦU THIẾT LẬP PERSONAL FINANCE MANAGER DATABASE
+d��� Thời gian: 2025-10-08 09:26:21
+d��� TA�c giả: Tiểu Nhất Bạch
+d�?� Mục tiA�u: Tạo database hoA�n chỉnh với tất cả chức năng
+d��? Bản quyền: © Tiểu Nhất Bạch 2025
+ 
+d��? BƯ�?C 1: Tạo Database PersonalFinanceDB...
+d���️ ĐA� xA�a database cũ
+✅ Database PersonalFinanceDB đA� được tạo thA�nh cA�ng
+Changed database context to 'PersonalFinanceDB'.
+d���️ BƯ�?C 2: Tạo cA�c bảng chA�nh...
+✅ Bảng Users đA� được tạo
+✅ Bảng Categories đA� được tạo
+✅ Bảng Transactions đA� được tạo
+✅ Bảng Budgets đA� được tạo
+✅ Bảng UserSettings đA� được tạo
+✅ Bảng Notifications đA� được tạo
+✅ Bảng RecurringTransactions đA� được tạo
+✅ Bảng RecurringTransactionHistory đA� được tạo
+✅ Bảng BackupHistory đA� được tạo
+✅ Bảng AuditLog đA� được tạo
+d��? BƯ�?C 3: Tạo indexes cho hiệu suất...
+✅ Tất cả indexes đA� được tạo để tối ưu hiệu suất
+d���️ BƯ�?C 4: Tạo cA�c Views...
+✅ View vw_TransactionSummary đA� được tạo
+✅ View vw_BudgetProgress đA� được tạo
+✅ View vw_MonthlyIncomeExpense đA� được tạo
+�?�️ BƯ�?C 5: Tạo cA�c Functions...
+✅ Function fn_GetBudgetProgress đA� được tạo
+✅ Function fn_GetIncomeExpenseSummary đA� được tạo
+d��� BƯ�?C 6: Tạo cA�c Stored Procedures...
+✅ Procedure sp_CreateDefaultCategoriesForUser đA� được tạo
+✅ Procedure sp_ProcessRecurringTransactions đA� được tạo
+✅ Procedure sp_UpdateBudgetSpentAmount đA� được tạo
+✅ Procedure sp_CreateNotification đA� được tạo
+�?� BƯ�?C 7: Tạo cA�c Triggers...
+✅ Trigger tr_Users_UpdatedAt đA� được tạo
+✅ Trigger tr_Transactions_UpdateBudget đA� được tạo
+d��� BƯ�?C 8: ChA�n dữ liệu mặc định...
+
+(7 rows affected)
+
+(11 rows affected)
+✅ ĐA� chA�n 11 default categories
+
+(1 rows affected)
+✅ ĐA� tạo user mẫu với email: nguoidung@vidu.com vA� mật khẩu: 123456
+CategoriesCreated
+-----------------
+               18
+✅ ĐA� tạo categories cho user mẫu
+
+(9 rows affected)
+✅ ĐA� chA�n 9 transactions mẫu
+
+(3 rows affected)
+✅ ĐA� tạo 3 budgets mẫu
+
+(13 rows affected)
+✅ ĐA� chA�n 13 settings mẫu
+
+(4 rows affected)
+✅ ĐA� chA�n 4 notifications mẫu
+
+(2 rows affected)
+✅ ĐA� tạo 2 recurring transactions mẫu
+✅ ĐA� cập nhật spent amount cho budgets
+⏰ BƯ�?C 9: Tạo SQL Agent Jobs...
+�?�️ Job ProcessRecurringTransactions đA� tồn tại
+ 
+d�?� THIẾT LẬP DATABASE HOA�N TẤT!
+ 
+d��� THA�NG TIN ĐĂNG NHẬP MẪU:
+   d��� Email: nguoidung@vidu.com
+   d��� Mật khẩu: 123456
+ 
+d��? THỐNG KA? DATABASE:
+   - Users: 1
+   - Categories: 36
+   - Transactions: 9
+   - Budgets: 3
+   - UserSettings: 13
+   - Notifications: 4
+   - RecurringTransactions: 2
+ 
+d��� CA�C OBJECTS ĐA� TẠO:
+   - Tables: 10 bảng chA�nh
+   - Views: 3 views thống kA�
+   - Functions: 2 functions tiện A�ch
+   - Stored Procedures: 4 procedures
+   - Triggers: 2 triggers tự động
+   - Indexes: 20+ indexes tối ưu
+   - SQL Agent Jobs: 1 job tự động
+ 
+d�?� SẴN SA�NG SỬ DỤNG PERSONAL FINANCE MANAGER!
+d��� TA�c giả: Tiểu Nhất Bạch
+d��� HoA�n thA�nh: 2025-10-08 09:26:21
+d��? Bản quyền: © Tiểu Nhất Bạch 2025
+ 
+d��� THA�NG TIN KẾT NỐI:
+   Server: TIEUNHATBACH666\TIEUNHATBACH
+   Database: PersonalFinanceDB
+   Login: sa / Password: 123456
+ 
+d�?� Chỉ cần chạy file nA�y lA� cA� thể sử dụng ngay!
+d��� Để khởi động ứng dụng:
+   Backend: cd backend && npm run dev
+   Frontend: cd frontend && npm run dev
+ 
+✨ DATABASE ĐA� SẴN SA�NG V�?I ĐẦY ĐỦ CHỨC NĂNG!

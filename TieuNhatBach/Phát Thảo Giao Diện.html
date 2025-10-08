@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thiết Kế UI - Quản Lý Tài Chính Cá Nhân | Penpot Design</title>
+    <style>
+        /* © Tiểu Nhất Bạch 2025 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: auto;
+        }
+
+        .design-container {
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .design-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .design-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .design-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .screens-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .screen-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.8s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #1976d2, #dc004e, #4caf50, #ff9800);
+            animation: shimmer 2s infinite;
+        }
+
+        .screen-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+        }
+
+        .screen-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1976d2;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .screen-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .dashboard-icon { background: #1976d2; }
+        .transaction-icon { background: #dc004e; }
+        .budget-icon { background: #4caf50; }
+        .stats-icon { background: #ff9800; }
+        .notification-icon { background: #9c27b0; }
+        .settings-icon { background: #607d8b; }
+
+        .mockup-frame {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            background: #fafafa;
+            min-height: 300px;
+            position: relative;
+        }
+
+        .mockup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: linear-gradient(135deg, #1976d2, #1565c0);
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .mockup-sidebar {
+            width: 60px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 10px 5px;
+            position: absolute;
+            left: 15px;
+            top: 70px;
+            bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sidebar-item {
+            width: 50px;
+            height: 40px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-item.active {
+            background: #1976d2;
+            color: white;
+        }
+
+        .mockup-content {
+            margin-left: 80px;
+            padding: 15px;
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: scale(1.05);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .income { color: #4caf50; }
+        .expense { color: #f44336; }
+        .balance { color: #1976d2; }
+
+        .chart-area {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .chart-placeholder {
+            width: 80px;
+            height: 80px;
+            border: 4px solid #1976d2;
+            border-top: 4px solid transparent;
+            border-radius: 50%;
+            animation: spin 2s linear infinite;
+        }
+
+        .transactions-list {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .form-mockup {
+            display: grid;
+            gap: 10px;
+        }
+
+        .form-field {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+
+        .form-field:focus {
+            border-color: #1976d2;
+            outline: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1976d2, #1565c0);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(25, 118, 210, 0.3);
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+            margin: 5px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-success { background: #4caf50; }
+        .progress-warning { background: #ff9800; }
+        .progress-danger { background: #f44336; }
+
+        .color-palette {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+
+        .color-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            animation: pulse 2s infinite;
+        }
+
+        .primary-color { background: #1976d2; }
+        .secondary-color { background: #dc004e; }
+        .success-color { background: #4caf50; }
+        .warning-color { background: #ff9800; }
+
+        .design-info {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .copyright {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: 200px 0; }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @media (max-width: 768px) {
+            .screens-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .mockup-sidebar {
+                display: none;
+            }
+            
+            .mockup-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="design-container">
+        <div class="design-header">
+            <h1>🎨 Thiết Kế UI - Quản Lý Tài Chính Cá Nhân</h1>
+            <p>Thiết kế giao diện chuyên nghiệp với Tiểu Nhất Bạch Coder</p>
+            
+            <div class="color-palette">
+                <div class="color-swatch primary-color" title="Primary: #1976d2"></div>
+                <div class="color-swatch secondary-color" title="Secondary: #dc004e"></div>
+                <div class="color-swatch success-color" title="Success: #4caf50"></div>
+                <div class="color-swatch warning-color" title="Warning: #ff9800"></div>
+            </div>
+        </div>
+
+        <div class="screens-grid">
+            <!-- Dashboard Screen -->
+            <div class="screen-card">
+                <div class="screen-title">
+                    <div class="screen-icon dashboard-icon">📊</div>
+                    Dashboard Chính
+                </div>
+                <div class="mockup-frame">
+                    <div class="mockup-header">
+                        <div>💰 Quản Lý Tài Chính</div>
+                        <div>🔔 👤</div>
+                    </div>
+                    <div class="mockup-sidebar">
+                        <div class="sidebar-item active">📊</div>
+                        <div class="sidebar-item">💳</div>
+                        <div class="sidebar-item">💰</div>
+                        <div class="sidebar-item">📈</div>
+                        <div class="sidebar-item">🔔</div>
+                        <div class="sidebar-item">⚙️</div>
+                    </div>
+                    <div class="mockup-content">
+                        <div class="stats-cards">
+                            <div class="stat-card">
+                                <div class="stat-value income">+15.5M</div>
+                                <div class="stat-label">Thu nhập</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value expense">-8.2M</div>
+                                <div class="stat-label">Chi tiêu</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value balance">7.3M</div>
+                                <div class="stat-label">Số dư</div>
+                            </div>
+                        </div>
+                        <div class="chart-area">
+                            <div class="chart-placeholder"></div>
+                            <div style="position: absolute; bottom: 10px; right: 15px; font-size: 0.8rem; color: #666;">
+                                Biểu đồ chi tiêu theo danh mục
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transaction Management Screen -->
+            <div class="screen-card">
+                <div class="screen-title">
+                    <div class="screen-icon transaction-icon">💳</div>
+                    Quản Lý Giao Dịch
+                </div>
+                <div class="mockup-frame">
+                    <div class="mockup-header">
+                        <div>💳 Giao Dịch</div>
+                        <div>🔍 ➕</div>
+                    </div>
+                    <div class="mockup-sidebar">
+                        <div class="sidebar-item">📊</div>
+                        <div class="sidebar-item active">💳</div>
+                        <div class="sidebar-item">💰</div>
+                        <div class="sidebar-item">📈</div>
+                        <div class="sidebar-item">🔔</div>
+                        <div class="sidebar-item">⚙️</div>
+                    </div>
+                    <div class="mockup-content">
+                        <div class="form-mockup" style="margin-bottom: 15px;">
+                            <input class="form-field" placeholder="Tìm kiếm giao dịch..." />
+                            <select class="form-field">
+                                <option>Tất cả danh mục</option>
+                            </select>
+                        </div>
+                        <div class="transactions-list">
+                            <div class="transaction-item">
+                                <div>🍕 Ăn uống</div>
+                                <div class="expense">-150,000đ</div>
+                            </div>
+                            <div class="transaction-item">
+                                <div>💼 Lương</div>
+                                <div class="income">+15,000,000đ</div>
+                            </div>
+                            <div class="transaction-item">
+                                <div>🚗 Xăng xe</div>
+                                <div class="expense">-200,000đ</div>
+                            </div>
+                            <div class="transaction-item">
+                                <div>🛒 Mua sắm</div>
+                                <div class="expense">-500,000đ</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budget Management Screen -->
+            <div class="screen-card">
+                <div class="screen-title">
+                    <div class="screen-icon budget-icon">💰</div>
+                    Quản Lý Ngân Sách
+                </div>
+                <div class="mockup-frame">
+                    <div class="mockup-header">
+                        <div>💰 Ngân Sách</div>
+                        <div>➕ 📊</div>
+                    </div>
+                    <div class="mockup-sidebar">
+                        <div class="sidebar-item">📊</div>
+                        <div class="sidebar-item">💳</div>
+                        <div class="sidebar-item active">💰</div>
+                        <div class="sidebar-item">📈</div>
+                        <div class="sidebar-item">🔔</div>
+                        <div class="sidebar-item">⚙️</div>
+                    </div>
+                    <div class="mockup-content">
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                <span>🍕 Ăn uống</span>
+                                <span>1.2M / 2M</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-success" style="width: 60%;"></div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                <span>🛒 Mua sắm</span>
+                                <span>1.8M / 2M</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-warning" style="width: 90%;"></div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                <span>🎮 Giải trí</span>
+                                <span>1.1M / 1M</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-danger" style="width: 110%;"></div>
+                            </div>
+                        </div>
+                        <button class="btn-primary" style="width: 100%; margin-top: 10px;">
+                            ➕ Tạo Ngân Sách Mới
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Screen -->
+            <div class="screen-card">
+                <div class="screen-title">
+                    <div class="screen-icon stats-icon">📈</div>
+                    Thống Kê & Báo Cáo
+                </div>
+                <div class="mockup-frame">
+                    <div class="mockup-header">
+                        <div>📈 Thống Kê</div>
+                        <div>📅 📊</div>
+                    </div>
+                    <div class="mockup-sidebar">
+                        <div class="sidebar-item">📊</div>
+                        <div class="sidebar-item">💳</div>
+                        <div class="sidebar-item">💰</div>
+                        <div class="sidebar-item active">📈</div>
+                        <div class="sidebar-item">🔔</div>
+                        <div class="sidebar-item">⚙️</div>
+                    </div>
+                    <div class="mockup-content">
+                        <div class="form-mockup" style="margin-bottom: 15px;">
+                            <select class="form-field">
+                                <option>Tháng này</option>
+                                <option>3 tháng</option>
+                                <option>6 tháng</option>
+                                <option>1 năm</option>
+                            </select>
+                        </div>
+                        <div class="chart-area" style="height: 100px;">
+                            <div style="display: flex; align-items: end; gap: 5px; height: 60px;">
+                                <div style="background: #1976d2; width: 15px; height: 40px; border-radius: 2px;"></div>
+                                <div style="background: #dc004e; width: 15px; height: 55px; border-radius: 2px;"></div>
+                                <div style="background: #4caf50; width: 15px; height: 30px; border-radius: 2px;"></div>
+                                <div style="background: #ff9800; width: 15px; height: 45px; border-radius: 2px;"></div>
+                                <div style="background: #9c27b0; width: 15px; height: 35px; border-radius: 2px;"></div>
+                                <div style="background: #607d8b; width: 15px; height: 50px; border-radius: 2px;"></div>
+                            </div>
+                            <div style="position: absolute; bottom: 10px; right: 15px; font-size: 0.8rem; color: #666;">
+                                Biểu đồ thu chi 6 tháng
+                            </div>
+                        </div>
+                        <div class="stats-cards">
+                            <div class="stat-card">
+                                <div class="stat-value">🍕</div>
+                                <div class="stat-label">Top chi tiêu</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">+12%</div>
+                                <div class="stat-label">Tăng trưởng</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Screen -->
+            <div class="screen-card">
+                <div class="screen-title">
+                    <div class="screen-icon notification-icon">🔔</div>
+                    Thông Báo
+                </div>
+                <div class="mockup-frame">
+                    <div class="mockup-header">
+                        <div>🔔 Thông Báo</div>
+                        <div>✅ 🗑️</div>
+                    </div>
+                    <div class="mockup-sidebar">
+                        <div class="sidebar-item">📊</div>
+                        <div class="sidebar-item">💳</div>
+                        <div class="sidebar-item">💰</div>
+                        <div class="sidebar-item">📈</div>
+                        <div class="sidebar-item active">🔔</div>
+                        <div class="sidebar-item">⚙️</div>
+                    </div>
+                    <div class="mockup-content">
+                        <div class="transactions-list">
+                            <div class="transaction-item" style="background: #fff3cd; border-radius: 6px; padding: 10px; margin-bottom: 8px;">
+                                <div>
+                                    <div style="font-weight: bold; color: #856404;">⚠️ Cảnh báo ngân sách</div>
+                                    <div style="font-size: 0.8rem; color: #666;">Ngân sách "Giải trí" đã vượt 10%</div>
+                                </div>
+                                <div style="font-size: 0.8rem; color: #666;">2h trước</div>
+                            </div>
+                            <div class="transaction-item" style="background: #d4edda; border-radius: 6px; padding: 10px; margin-bottom: 8px;">
+                                <div>
+                                    <div style="font-weight: bold; color: #155724;">✅ Mục tiêu hoàn thành</div>
+                                    <div style="font-size: 0.8rem; color: #666;">Tiết kiệm 5M trong tháng</div>
+                                </div>
+                                <div style="font-size: 0.8rem; color: #666;">1 ngày</div>
+                            </div>
+                            <div class="transaction-item" style="background: #f8d7da; border-radius: 6px; padding: 10px; margin-bottom: 8px;">
+                                <div>
+                                    <div style="font-weight: bold; color: #721c24;">🚨 Vượt ngân sách</div>
+                                    <div style="font-size: 0.8rem; color: #666;">Chi tiêu "Ăn uống" vượt 500K</div>
+                                </div>
+                                <div style="font-size: 0.8rem; color: #666;">3 ngày</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Screen -->
+            <div class="screen-card">
+                <div class="screen-title">
+                    <div class="screen-icon settings-icon">⚙️</div>
+                    Cài Đặt
+                </div>
+                <div class="mockup-frame">
+                    <div class="mockup-header">
+                        <div>⚙️ Cài Đặt</div>
+                        <div>💾 🔄</div>
+                    </div>
+                    <div class="mockup-sidebar">
+                        <div class="sidebar-item">📊</div>
+                        <div class="sidebar-item">💳</div>
+                        <div class="sidebar-item">💰</div>
+                        <div class="sidebar-item">📈</div>
+                        <div class="sidebar-item">🔔</div>
+                        <div class="sidebar-item active">⚙️</div>
+                    </div>
+                    <div class="mockup-content">
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: white; border-radius: 6px; margin-bottom: 8px;">
+                                <span>🌙 Chế độ tối</span>
+                                <div style="width: 40px; height: 20px; background: #1976d2; border-radius: 10px; position: relative;">
+                                    <div style="width: 18px; height: 18px; background: white; border-radius: 50%; position: absolute; top: 1px; right: 1px;"></div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: white; border-radius: 6px; margin-bottom: 8px;">
+                                <span>🔔 Thông báo</span>
+                                <div style="width: 40px; height: 20px; background: #e0e0e0; border-radius: 10px; position: relative;">
+                                    <div style="width: 18px; height: 18px; background: white; border-radius: 50%; position: absolute; top: 1px; left: 1px;"></div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: white; border-radius: 6px; margin-bottom: 8px;">
+                                <span>🌐 Ngôn ngữ</span>
+                                <span style="color: #666;">Tiếng Việt</span>
+                            </div>
+                        </div>
+                        <button class="btn-primary" style="width: 100%; margin-bottom: 10px;">
+                            💾 Sao lưu dữ liệu
+                        </button>
+                        <button class="btn-primary" style="width: 100%; background: linear-gradient(135deg, #4caf50, #388e3c);">
+                            📤 Xuất báo cáo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="design-info">
+            <h3>🎨 Thông Tin Thiết Kế</h3>
+            <p><strong>Hệ thống màu sắc:</strong> Material Design với Primary Blue (#1976d2), Secondary Pink (#dc004e)</p>
+            <p><strong>Typography:</strong> Segoe UI - Font hiện đại, dễ đọc</p>
+            <p><strong>Layout:</strong> Responsive Grid System với Sidebar Navigation</p>
+            <p><strong>Animation:</strong> Smooth transitions, hover effects, loading states</p>
+            <p><strong>Components:</strong> Cards, Progress bars, Charts, Forms, Notifications</p>
+        </div>
+
+        <div class="copyright">
+            © 2025 Tiểu Nhất Bạch - Thiết Kế UI Chuyên Nghiệp
+        </div>
+    </div>
+
+    <script>
+        // © Tiểu Nhất Bạch 2025
+        // Animation effects
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate progress bars
+            const progressBars = document.querySelectorAll('.progress-fill');
+            progressBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 500);
+            });
+
+            // Add click effects to buttons
+            const buttons = document.querySelectorAll('.btn-primary');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const ripple = document.createElement('span');
+                    ripple.style.position = 'absolute';
+                    ripple.style.borderRadius = '50%';
+                    ripple.style.background = 'rgba(255,255,255,0.6)';
+                    ripple.style.transform = 'scale(0)';
+                    ripple.style.animation = 'ripple 0.6s linear';
+                    ripple.style.left = (e.clientX - e.target.offsetLeft) + 'px';
+                    ripple.style.top = (e.clientY - e.target.offsetTop) + 'px';
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+
+            // Animate cards on scroll
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            });
+
+            document.querySelectorAll('.screen-card').forEach(card => {
+                observer.observe(card);
+            });
+        });
+
+        // Add ripple animation CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

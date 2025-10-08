@@ -1,0 +1,83 @@
+Changed database context to 'master'.
+d�?� BẮT ĐẦU THIẾT LẬP PERSONAL FINANCE MANAGER DATABASE
+d��� Thời gian: 2025-10-08 09:23:13
+d��� TA�c giả: Tiểu Nhất Bạch
+d�?� Mục tiA�u: Tạo database hoA�n chỉnh với tất cả chức năng
+d��? Bản quyền: © Tiểu Nhất Bạch 2025
+ 
+d��? BƯ�?C 1: Tạo Database PersonalFinanceDB...
+d���️ ĐA� xA�a database cũ
+✅ Database PersonalFinanceDB đA� được tạo thA�nh cA�ng
+Changed database context to 'PersonalFinanceDB'.
+d���️ BƯ�?C 2: Tạo cA�c bảng chA�nh...
+✅ Bảng Users đA� được tạo
+✅ Bảng Categories đA� được tạo
+✅ Bảng Transactions đA� được tạo
+✅ Bảng Budgets đA� được tạo
+✅ Bảng UserSettings đA� được tạo
+✅ Bảng Notifications đA� được tạo
+Msg 1785, Level 16, State 1, Server TieuNhatBach666\TIEUNHATBACH, Line 128
+Introducing FOREIGN KEY constraint 'FK__Recurring__Categ__787EE5A0' on table 'RecurringTransactions' may cause cycles or multiple cascade paths. Specify ON DELETE NO ACTION or ON UPDATE NO ACTION, or modify other FOREIGN KEY constraints.
+Msg 1750, Level 16, State 1, Server TieuNhatBach666\TIEUNHATBACH, Line 128
+Could not create constraint or index. See previous errors.
+d��? BƯ�?C 3: Tạo indexes cho hiệu suất...
+Msg 1088, Level 16, State 12, Server TieuNhatBach666\TIEUNHATBACH, Line 41
+Cannot find the object "RecurringTransactions" because it does not exist or you do not have permissions.
+d���️ BƯ�?C 4: Tạo cA�c Views...
+✅ View vw_TransactionSummary đA� được tạo
+✅ View vw_BudgetProgress đA� được tạo
+✅ View vw_MonthlyIncomeExpense đA� được tạo
+�?�️ BƯ�?C 5: Tạo cA�c Functions...
+✅ Function fn_GetBudgetProgress đA� được tạo
+✅ Function fn_GetIncomeExpenseSummary đA� được tạo
+d��� BƯ�?C 6: Tạo cA�c Stored Procedures...
+✅ Procedure sp_CreateDefaultCategoriesForUser đA� được tạo
+✅ Procedure sp_ProcessRecurringTransactions đA� được tạo
+✅ Procedure sp_UpdateBudgetSpentAmount đA� được tạo
+✅ Procedure sp_CreateNotification đA� được tạo
+�?� BƯ�?C 7: Tạo cA�c Triggers...
+✅ Trigger tr_Users_UpdatedAt đA� được tạo
+✅ Trigger tr_Transactions_UpdateBudget đA� được tạo
+d��� BƯ�?C 8: ChA�n dữ liệu mặc định...
+Msg 547, Level 16, State 1, Server TieuNhatBach666\TIEUNHATBACH, Line 12
+The INSERT statement conflicted with the FOREIGN KEY constraint "FK__Categorie__UserI__49C3F6B7". The conflict occurred in database "PersonalFinanceDB", table "dbo.Users", column 'UserID'.
+The statement has been terminated.
+Msg 547, Level 16, State 1, Server TieuNhatBach666\TIEUNHATBACH, Line 22
+The INSERT statement conflicted with the FOREIGN KEY constraint "FK__Categorie__UserI__49C3F6B7". The conflict occurred in database "PersonalFinanceDB", table "dbo.Users", column 'UserID'.
+The statement has been terminated.
+✅ ĐA� chA�n 0 default categories
+
+(1 rows affected)
+✅ ĐA� tạo user mẫu với email: nguoidung@vidu.com vA� mật khẩu: 123456
+CategoriesCreated
+-----------------
+                0
+✅ ĐA� tạo categories cho user mẫu
+Msg 515, Level 16, State 2, Server TieuNhatBach666\TIEUNHATBACH, Line 59
+Cannot insert the value NULL into column 'CategoryID', table 'PersonalFinanceDB.dbo.Transactions'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+✅ ĐA� chA�n 0 transactions mẫu
+Msg 515, Level 16, State 2, Server TieuNhatBach666\TIEUNHATBACH, Line 73
+Cannot insert the value NULL into column 'CategoryID', table 'PersonalFinanceDB.dbo.Budgets'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+✅ ĐA� tạo 0 budgets mẫu
+
+(13 rows affected)
+✅ ĐA� chA�n 13 settings mẫu
+
+(4 rows affected)
+✅ ĐA� chA�n 4 notifications mẫu
+Msg 208, Level 16, State 1, Server TieuNhatBach666\TIEUNHATBACH, Line 111
+Invalid object name 'RecurringTransactions'.
+⏰ BƯ�?C 9: Tạo SQL Agent Jobs...
+✅ Job ProcessRecurringTransactions đA� được tạo
+ 
+d�?� THIẾT LẬP DATABASE HOA�N TẤT!
+ 
+d��� THA�NG TIN ĐĂNG NHẬP MẪU:
+   d��� Email: nguoidung@vidu.com
+   d��� Mật khẩu: 123456
+ 
+d��? THỐNG KA? DATABASE:
+Msg 208, Level 16, State 1, Server TieuNhatBach666\TIEUNHATBACH, Line 25
+Invalid object name 'RecurringTransactions'.
